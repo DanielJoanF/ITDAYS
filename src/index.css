@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* New Color Palette */
+  --primary-color: #28693C;
+  --accent-color: #D4AF37;
+  --background-color: #0d1210; /* Dark tech theme */
+  --text-primary: #f0f4f2;
+  --text-secondary: #9aa8a1;
+  
+  /* Fonts */
+  --font-display: 'JetBrains Mono', monospace;
+  --font-body: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  /* Theme properties */
+  --border-radius: 6px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --box-shadow-glow: 0 0 15px rgba(40, 105, 60, 0.3);
+  --transition-smooth: all 0.2s ease-in-out;
+
+  /* Backward compatibility map */
+  --color-bg: var(--background-color);
+  --color-text: var(--text-primary);
+  --color-accent: var(--accent-color);
+  --color-gray: var(--text-secondary);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--background-color);
+  background-image: 
+    radial-gradient(circle at top right, rgba(40, 105, 60, 0.15), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.08), transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+  background-attachment: fixed;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition-smooth);
+}
+
+ul {
+  list-style: none;
+}
+
+/* Utilities */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.text-display {
+  font-family: var(--font-display);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* Glassmorphism Utility */
+.glass-panel {
+  background: rgba(13, 18, 16, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(40, 105, 60, 0.3);
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+}

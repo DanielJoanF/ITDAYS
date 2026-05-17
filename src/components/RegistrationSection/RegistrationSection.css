@@ -1,0 +1,239 @@
+/* ── Registration Section ─────────────────────────────────── */
+.registration-section {
+  padding: 6rem 2rem 4rem;
+}
+
+/* Header */
+.reg-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.reg-header .form-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+}
+
+.reg-header .form-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-gray);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Tab Navigation ───────────────────────────────────────── */
+.reg-tabs {
+  display: flex;
+  gap: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.reg-tab {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.9rem 1.6rem;
+  background: transparent;
+  color: var(--color-gray);
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.reg-tab:hover {
+  color: var(--accent-color);
+}
+
+.reg-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* ── Panel ────────────────────────────────────────────────── */
+.reg-panel {
+  padding: 2.5rem 2rem;
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+}
+
+/* ── Cabang Chips ─────────────────────────────────────────── */
+.cabang-selector {
+  margin-bottom: 2rem;
+}
+
+.cabang-selector .field-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--color-gray);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.cabang-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cabang-chip {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--border-radius);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-gray);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.cabang-chip:hover {
+  background: rgba(40, 105, 60, 0.1);
+  color: var(--accent-color);
+  border-color: var(--primary-color);
+}
+
+.cabang-chip.active {
+  background: var(--primary-color);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+  box-shadow: var(--box-shadow-glow);
+}
+
+/* ── Form Grid ────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-gray);
+  letter-spacing: 0.04em;
+}
+
+/* ── Inputs ───────────────────────────────────────────────── */
+.registration-section .main-input {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--border-radius);
+  padding: 0.85rem 1rem;
+  outline: none;
+  transition: var(--transition-smooth);
+  width: 100%;
+}
+
+.registration-section .main-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.registration-section .main-input:focus {
+  border-color: var(--primary-color);
+  background: rgba(40, 105, 60, 0.08);
+  box-shadow: 0 0 0 2px rgba(40, 105, 60, 0.2);
+}
+
+/* ── Submit ───────────────────────────────────────────────── */
+.registration-section .form-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.selected-info {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--color-gray);
+}
+
+.registration-section .submit-btn-minimal {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 0.85rem 2.5rem;
+  background: var(--primary-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.registration-section .submit-btn-minimal:hover {
+  background: var(--accent-color);
+  color: var(--background-color);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+  transform: translateY(-1px);
+}
+
+.registration-section .submit-btn-minimal:disabled {
+  opacity: 0.4;
+  background: var(--color-gray);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .registration-section {
+    padding: 4rem 1rem 3rem;
+  }
+
+  .reg-panel {
+    padding: 1.5rem 1rem;
+  }
+
+  .reg-tab {
+    font-size: 0.6rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-section .form-controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .registration-section .submit-btn-minimal {
+    width: 100%;
+  }
+}
