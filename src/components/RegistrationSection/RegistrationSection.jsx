@@ -4,7 +4,7 @@ import { validateForm, fileToBase64 } from '../../utils/validation';
 import Toast from '../Toast/Toast';
 import './RegistrationSection.css';
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmBIGykg2pIZBzoGqN3WeJqX6zBQiEdB9ZqGl51HVIF-XKcZrbN9G1vV_O47soMCLTbg/exec';
+const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxmBIGykg2pIZBzoGqN3WeJqX6zBQiEdB9ZqGl51HVIF-XKcZrbN9G1vV_O47soMCLTbg/exec';
 
 export default function RegistrationSection() {
   const [activeCategory, setActiveCategory] = useState(CATEGORY_KEYS[0]);
