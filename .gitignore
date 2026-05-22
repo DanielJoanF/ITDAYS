@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 ai-system-context.md
 AGENT.md
+.env
+.env.example
+
+# Hidden secret configurations
+.config/settings/.env
+!.config/settings/.env.example

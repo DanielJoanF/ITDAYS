@@ -1,10 +1,30 @@
 import { useState, useCallback, useMemo } from 'react';
-import { CATEGORIES, CATEGORY_KEYS, getBranchConfig } from '../../data/categories';
+import { CATEGORIES, CATEGORY_KEYS } from '../../data/categories';
 import { validateForm, fileToBase64 } from '../../utils/validation';
 import Toast from '../Toast/Toast';
 import './RegistrationSection.css';
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxmBIGykg2pIZBzoGqN3WeJqX6zBQiEdB9ZqGl51HVIF-XKcZrbN9G1vV_O47soMCLTbg/exec';
+const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+
+const COL = {
+  TIMESTAMP:    "Timestamp",
+  NAMA:         "Nama Lengkap",
+  EMAIL:        "Email Aktif",
+  NO_HP:        "Nomor WhatsApp",
+  INSTANSI:     "Asal Instansi / Sekolah",
+  KATEGORI:     "Kategori Lomba",
+  CABANG:       "Cabang Lomba",
+  NAMA_TIM:     "Nama Tim",
+  ANGGOTA:      "Nama Anggota Tim",
+  ID_GAME:      "ID Game (Kapten)",
+  NICKNAME:     "Nickname In-Game",
+  FIGMA_LINK:   "Link Figma Project",
+  GITHUB_LINK:  "Link Repository GitHub",
+  DRIVE_PPT:    "Link Google Drive (PPT/PDF Presentasi)",
+  DRIVE_POSTER: "Link Google Drive (Hasil Poster)",
+  KTM:          "Foto KTM / Kartu Tanda Siswa",
+  BUKTI_BAYAR:  "Link Bukti Pembayaran",
+};
 
 export default function RegistrationSection() {
   const [activeCategory, setActiveCategory] = useState(CATEGORY_KEYS[0]);
@@ -99,37 +119,32 @@ export default function RegistrationSection() {
     setIsSubmitting(true);
 
     try {
-      // Encode files to base64
+      // Encode files to base64 objects { name, type, data }
       const [ktmEncoded, paymentEncoded] = await Promise.all([
         fileToBase64(ktmFile),
         fileToBase64(paymentFile),
       ]);
 
-      // Build spreadsheet payload
+      // Build spreadsheet payload matching the Google Apps Script COL keys exactly
       const payload = {
-        timestamp: new Date().toISOString(),
-        competition_type: activeBranch.name,
-        leader_name: formData.nama.trim(),
-        leader_email: formData.email.trim(),
-        phone: formData.whatsapp.trim(),
-        institution: formData.instansi.trim(),
-        team_members: teamMembers.filter((m) => m.trim()).join(', '),
-        // Competition-specific links — send empty string if not applicable
-        figma_link: (formData.figma_link || '').trim(),
-        github_link: (formData.github_link || '').trim(),
-        presentation_drive_link: (formData.presentation_drive_link || '').trim(),
-        poster_drive_link: (formData.poster_drive_link || '').trim(),
-        // File uploads — base64 encoded
-        ktm_file: ktmEncoded,
-        payment_proof_file: paymentEncoded,
+        [COL.TIMESTAMP]: new Date().toLocaleString("id-ID"),
+        [COL.NAMA]: formData.nama.trim(),
+        [COL.EMAIL]: formData.email.trim(),
+        [COL.NO_HP]: formData.whatsapp.trim(),
+        [COL.INSTANSI]: formData.instansi.trim(),
+        [COL.KATEGORI]: activeCategory,
+        [COL.CABANG]: activeBranch.name,
+        [COL.NAMA_TIM]: (formData.nama_tim || '').trim(),
+        [COL.ANGGOTA]: teamMembers.filter((m) => m.trim()).join(', '),
+        [COL.ID_GAME]: (formData.id_game || '').trim(),
+        [COL.NICKNAME]: (formData.nickname || '').trim(),
+        [COL.FIGMA_LINK]: (formData.figma_link || '').trim(),
+        [COL.GITHUB_LINK]: (formData.github_link || '').trim(),
+        [COL.DRIVE_PPT]: (formData.presentation_drive_link || '').trim(),
+        [COL.DRIVE_POSTER]: (formData.poster_drive_link || '').trim(),
+        [COL.KTM]: ktmEncoded,
+        [COL.BUKTI_BAYAR]: paymentEncoded,
       };
-
-      // Also include extra text fields (nama_tim, id_game, nickname)
-      activeBranch.extraFields.forEach((f) => {
-        if (!payload[f.name]) {
-          payload[f.name] = (formData[f.name] || '').trim();
-        }
-      });
 
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
@@ -149,7 +164,7 @@ export default function RegistrationSection() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, teamMembers, activeBranch, ktmFile, paymentFile, showToast]);
+  }, [formData, teamMembers, activeBranch, ktmFile, paymentFile, activeCategory, showToast]);
 
   // Info label for footer
   const infoLabel = `${activeCategory.toUpperCase()} → ${activeBranch.name.toUpperCase()}`;
