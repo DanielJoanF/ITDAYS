@@ -17,14 +17,14 @@ const CONFIG = {
 
   // Link grup WhatsApp per cabang — ganti dengan link asli
   WA_LINKS: {
-    "Bulu Tangkis":   "https://chat.whatsapp.com/GANTI_BADMINTON",
+    "Badminton":      "https://chat.whatsapp.com/GANTI_BADMINTON",
     "Futsal":         "https://chat.whatsapp.com/GANTI_FUTSAL",
     "Mobile Legends": "https://chat.whatsapp.com/GANTI_ML",
     "PUBG":           "https://chat.whatsapp.com/GANTI_PUBG",
     "UI/UX":          "https://chat.whatsapp.com/GANTI_UIUX",
-    "Lomba Web":      "https://chat.whatsapp.com/GANTI_WEBDEV",
+    "Web Dev":        "https://chat.whatsapp.com/GANTI_WEBDEV",
     "Poster":         "https://chat.whatsapp.com/GANTI_POSTER",
-    "Lomba Vokal":    "https://chat.whatsapp.com/GANTI_VOKAL",
+    "Vocal":          "https://chat.whatsapp.com/GANTI_VOKAL",
   },
 };
 
@@ -67,8 +67,8 @@ const END_COLS  = ["KTM", "Bukti Bayar", "Status", "Email Terkirim"];
 
 // Definisi sheet dan kolom tambahan per cabang
 const LOMBA_SHEETS = {
-  "Bulu Tangkis": {
-    sheetName: "Bulu Tangkis",
+  "Badminton": {
+    sheetName: "Badminton",
     extraCols: ["Nama Tim", "Anggota (2 Orang)"],
     fillExtra: (d) => [d.namaTim, d.anggota],
   },
@@ -92,8 +92,8 @@ const LOMBA_SHEETS = {
     extraCols: ["Link Figma"],
     fillExtra: (d) => [d.figmaLink],
   },
-  "Lomba Web": {
-    sheetName: "Lomba Web",
+  "Web Dev": {
+    sheetName: "Web Dev",
     extraCols: ["Nama Tim", "Anggota (2-3 Orang)", "Link GitHub", "Link Drive PPT"],
     fillExtra: (d) => [d.namaTim, d.anggota, d.githubLink, d.drivePpt],
   },
@@ -102,8 +102,8 @@ const LOMBA_SHEETS = {
     extraCols: ["Link Drive Poster"],
     fillExtra: (d) => [d.drivePoster],
   },
-  "Lomba Vokal": {
-    sheetName: "Lomba Vokal",
+  "Vocal": {
+    sheetName: "Vocal",
     extraCols: [],
     fillExtra: (d) => [],
   },
@@ -129,7 +129,18 @@ const LOG_HEADERS = [
 
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
+    // Coba baca dari e.parameter.payload (dikirim via URLSearchParams/FormData)
+    // Ini kompatibel dengan browser mode: 'no-cors'
+    let data;
+    if (e.parameter && e.parameter.payload) {
+      data = JSON.parse(e.parameter.payload);
+    } else if (e.postData && e.postData.contents) {
+      // Fallback: JSON body langsung (untuk testing via Postman/curl)
+      data = JSON.parse(e.postData.contents);
+    } else {
+      throw new Error("Tidak ada data yang diterima (parameter maupun postData kosong).");
+    }
+
     
     let folder;
     if (DRIVE_FOLDER_ID) {
@@ -618,14 +629,14 @@ function setupSemuaSheets() {
     "Sheet yang dibuat:\n" +
     "- Data Peserta\n" +
     "- Log Email\n" +
-    "- UI/UX\n" +
-    "- Lomba Web\n" +
-    "- Bulu Tangkis\n" +
+    "- Badminton\n" +
     "- Futsal\n" +
     "- Mobile Legends\n" +
     "- PUBG\n" +
+    "- UI/UX\n" +
+    "- Web Dev\n" +
     "- Poster\n" +
-    "- Lomba Vokal"
+    "- Vocal"
   );
 }
 
@@ -687,10 +698,10 @@ function kirimUlangEmail() {
 
   // Cabang diambil dari nama sheet
   const cabangMap = {
-    "Bulu Tangkis": "Bulu Tangkis", "Futsal": "Futsal",
+    "Badminton": "Badminton", "Futsal": "Futsal",
     "Mobile Legends": "Mobile Legends", "PUBG": "PUBG",
-    "UI/UX": "UI/UX", "Lomba Web": "Lomba Web",
-    "Poster": "Poster", "Lomba Vokal": "Lomba Vokal",
+    "UI/UX": "UI/UX", "Web Dev": "Web Dev",
+    "Poster": "Poster", "Vocal": "Vocal",
   };
 
   const d = {

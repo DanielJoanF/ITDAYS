@@ -146,11 +146,16 @@ export default function RegistrationSection() {
         [COL.BUKTI_BAYAR]: paymentEncoded,
       };
 
+      // Gunakan URLSearchParams agar request menjadi "simple request"
+      // yang bisa melewati CORS tanpa preflight di mode no-cors.
+      // Google Apps Script membaca payload via e.parameter.payload.
+      const formBody = new URLSearchParams();
+      formBody.append('payload', JSON.stringify(payload));
+
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: formBody,
       });
 
       showToast('Pendaftaran berhasil dikirim!', 'success');
