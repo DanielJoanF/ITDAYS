@@ -15,6 +15,8 @@ const Footer = () => {
             <h4>Tautan Cepat</h4>
             <ul>
               <li><a href="#">Beranda</a></li>
+              <li><a href="#about">Tentang</a></li>
+              <li><a href="#timeline">Timeline</a></li>
               <li><a href="#registration">Pendaftaran</a></li>
             </ul>
           </div>

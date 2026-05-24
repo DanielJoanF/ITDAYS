@@ -10,6 +10,8 @@ const Navbar = () => {
         </div>
         <ul className="nav-menu">
           <li className="nav-item"><a href="#" className="nav-link active">Beranda</a></li>
+          <li className="nav-item"><a href="#about" className="nav-link">Tentang</a></li>
+          <li className="nav-item"><a href="#timeline" className="nav-link">Timeline</a></li>
           <li className="nav-item"><a href="#registration" className="nav-link">Pendaftaran</a></li>
         </ul>
       </div>
