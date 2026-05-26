@@ -23,14 +23,14 @@ const Footer = () => {
           <div className="footer-col">
             <h4>Kontak Kami</h4>
             <ul>
-              <li><a href="mailto:info@itdays.id">info@itdays.id</a></li>
-              <li><a href="#">Instagram @itdays</a></li>
+              <li><a href="mailto:usditdays@gmail.com">usditdays@gmail.com</a></li>
+              <li><a href="#">Instagram @itdays_usd</a></li>
             </ul>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>&copy; 2026 IT DAYS. All rights reserved.</p>
+        <p>&copy; 2026 IT DAYS Universitas Sanata Dharma. All rights reserved.</p>
       </div>
     </footer>
   );
