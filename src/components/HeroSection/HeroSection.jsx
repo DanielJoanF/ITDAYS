@@ -31,10 +31,10 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="hero-section">
+    <section className="hero-section" id="home">
       <div className="hero-content">
         <h1 className="hero-title">IT DAYS 2026</h1>
-        <p className="hero-subtitle">Mens et Cospus</p>
+        <p className="hero-subtitle">Mens et Corpus</p>
         
         <div className="countdown-container glass-panel">
           <h2 className="countdown-label">Menuju Acara Utama</h2>

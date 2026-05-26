@@ -8,13 +8,18 @@ export default function Toast({ message, type = 'success' }) {
     // Trigger entrance animation
     requestAnimationFrame(() => setVisible(true));
 
-    const timer = setTimeout(() => setVisible(false), 3600);
+    const timer = setTimeout(() => setVisible(false), 5600);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <div className={`reg-toast ${type}${visible ? ' show' : ''}`}>
-      {message}
+      <div className="toast-icon">
+        {type === 'success' ? '✓' : '✗'}
+      </div>
+      <div className="toast-message">
+        {message}
+      </div>
     </div>
   );
 }

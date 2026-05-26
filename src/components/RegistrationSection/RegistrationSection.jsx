@@ -90,7 +90,7 @@ export default function RegistrationSection() {
 
   const showToast = useCallback((message, type) => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 6000);
   }, []);
 
   const handleSubmit = useCallback(async (e) => {
@@ -158,7 +158,7 @@ export default function RegistrationSection() {
         body: formBody,
       });
 
-      showToast('Pendaftaran berhasil dikirim!', 'success');
+      showToast('Pendaftaran berhasil dikirim! Silakan cek email Anda untuk bergabung ke dalam grup WhatsApp.', 'success');
       setFormData({});
       setTeamMembers([]);
       setKtmFile(null);

@@ -21,13 +21,13 @@
 .footer-title {
   font-family: var(--font-display);
   font-size: 1.8rem;
-  color: var(--primary-color);
+  color: var(--color-white);
   margin-bottom: 1.5rem;
   letter-spacing: 0.05em;
 }
 
 .footer-desc {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.8;
   max-width: 450px;
   font-size: 0.95rem;
@@ -40,7 +40,7 @@
 
 .footer-col h4 {
   font-family: var(--font-display);
-  color: var(--accent-color);
+  color: var(--color-bright-yellow);
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
   letter-spacing: 0.15em;
@@ -54,21 +54,21 @@
 }
 
 .footer-col a {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
   transition: var(--transition-smooth);
 }
 
 .footer-col a:hover {
-  color: var(--text-primary);
+  color: var(--color-white);
   padding-left: 5px;
 }
 
 .footer-bottom {
   text-align: center;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
   font-family: var(--font-display);
   letter-spacing: 0.05em;

@@ -12,19 +12,19 @@
 const CONFIG = {
   EVENT_NAME:      "IT Days 2025",
   EVENT_ORGANIZER: "Panitia IT Days 2025",
-  PANITIA_EMAIL:   "panitia.itdays@gmail.com",
-  REPLY_TO:        "panitia.itdays@gmail.com",
+  PANITIA_EMAIL:   "usditdays@gmail.com",
+  REPLY_TO:        "usditdays@gmail.com",
 
   // Link grup WhatsApp per cabang — ganti dengan link asli
   WA_LINKS: {
-    "Badminton":      "https://chat.whatsapp.com/GANTI_BADMINTON",
-    "Futsal":         "https://chat.whatsapp.com/GANTI_FUTSAL",
-    "Mobile Legends": "https://chat.whatsapp.com/GANTI_ML",
-    "PUBG":           "https://chat.whatsapp.com/GANTI_PUBG",
-    "UI/UX":          "https://chat.whatsapp.com/GANTI_UIUX",
-    "Web Dev":        "https://chat.whatsapp.com/GANTI_WEBDEV",
-    "Poster":         "https://chat.whatsapp.com/GANTI_POSTER",
-    "Vocal":          "https://chat.whatsapp.com/GANTI_VOKAL",
+    "Badminton":      "https://chat.whatsapp.com/Kgz5aV5fNMc5cX2IvnZGn4",
+    "Futsal":         "https://chat.whatsapp.com/Hy4Qy7z2h2wAHPcK1M9Yh2",
+    "Mobile Legends": "https://chat.whatsapp.com/L6k7zFFv3Rn4PfOTsK0GjX",
+    "PUBG":           "https://chat.whatsapp.com/Ckq6qzC194GL7f3ZAoU7Ix",
+    "UI/UX":          "https://chat.whatsapp.com/HmESEQFcdd9KmYk1UhnXK8",
+    "Web Dev":        "https://chat.whatsapp.com/Ld3uYPNjmlQJRR7SuahYxl",
+    "Poster":         "https://chat.whatsapp.com/CgtsvtXtfFj3Bpfb55lmEk",
+    "Vocal":          "https://chat.whatsapp.com/ITQ2LQcTlEt2tRvVJARlZe",
   },
 };
 
@@ -176,12 +176,7 @@ function doPost(e) {
     onFormSubmit({ namedValues: namedValues });
     
     return ContentService.createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders({
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      });
+      .setMimeType(ContentService.MimeType.JSON);
       
   } catch (err) {
     Logger.log("ERROR di doPost: " + err.message);
@@ -197,12 +192,7 @@ function doPost(e) {
     }
     
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON)
-      .setHeaders({
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      });
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -648,7 +638,7 @@ function testKirimEmail() {
   const d = {
     timestamp:   new Date().toLocaleString("id-ID"),
     nama:        "Budi Santoso",
-    email:       "GANTI_KE_EMAILMU@gmail.com",
+    email:       "officialdaniel144@gmail.com",
     noHp:        "081234567890",
     instansi:    "Universitas Diponegoro",
     kategori:    "Program",

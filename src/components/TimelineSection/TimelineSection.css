@@ -42,10 +42,10 @@
   width: 2px;
   background: linear-gradient(
     180deg,
-    rgba(40, 105, 60, 0.1) 0%,
+    rgba(22, 43, 76, 0.1) 0%,
     var(--primary-color) 20%,
     var(--accent-color) 80%,
-    rgba(212, 175, 55, 0.1) 100%
+    rgba(186, 103, 29, 0.1) 100%
   );
   transform: translateX(-50%);
 }
@@ -79,15 +79,15 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--background-color);
+  background: var(--color-bright-yellow);
   border: 3px solid var(--primary-color);
-  box-shadow: 0 0 8px var(--primary-color);
+  box-shadow: 0 0 8px var(--color-bright-yellow);
   transition: var(--transition-smooth);
 }
 
 .timeline-item.highlight .timeline-dot {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 12px var(--accent-color);
+  border-color: var(--color-spicy-red);
+  box-shadow: 0 0 12px var(--color-spicy-red);
 }
 
 .timeline-content-card {
@@ -95,7 +95,7 @@
   padding: 2rem;
   position: relative;
   transition: var(--transition-smooth);
-  border-color: rgba(40, 105, 60, 0.2);
+  border-color: rgba(186, 103, 29, 0.2);
 }
 
 .timeline-item.left .timeline-content-card {
@@ -110,7 +110,7 @@
   display: block;
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--accent-color);
+  color: var(--color-bright-yellow);
   margin-bottom: 0.6rem;
   letter-spacing: 0.1em;
 }
@@ -118,7 +118,7 @@
 .timeline-event-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--color-white);
   margin-bottom: 0.8rem;
   letter-spacing: 0.02em;
 }
@@ -126,7 +126,7 @@
 .timeline-event-desc {
   font-size: 0.82rem;
   line-height: 1.6;
-  color: var(--color-gray);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Hover Effects */
@@ -135,14 +135,14 @@
 }
 
 .timeline-item:hover .timeline-content-card {
-  border-color: var(--primary-color);
-  box-shadow: var(--box-shadow-glow);
+  border-color: var(--color-bright-yellow);
+  box-shadow: 0 0 15px rgba(255, 218, 0, 0.2);
   transform: translateY(-2px);
 }
 
 .timeline-item.highlight:hover .timeline-content-card {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
+  border-color: var(--color-spicy-red);
+  box-shadow: 0 0 15px rgba(204, 42, 20, 0.35);
 }
 
 /* Responsive Styles */

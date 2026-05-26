@@ -3,33 +3,87 @@ import './TimelineSection.css';
 const TimelineSection = () => {
   const events = [
     {
-      date: "01 – 30 Juni 2026",
-      title: "Pendaftaran Gelombang 1",
-      desc: "Pembukaan pendaftaran periode awal (Early Bird) untuk seluruh cabang kompetisi dengan tarif pendaftaran khusus.",
-      status: "upcoming"
-    },
-    {
-      date: "01 Juli – 15 Agustus 2026",
-      title: "Pendaftaran Gelombang 2",
-      desc: "Masa pendaftaran reguler dan batas akhir pengunggahan dokumen kelengkapan administratif tim peserta.",
-      status: "upcoming"
-    },
-    {
-      date: "16 – 25 Agustus 2026",
-      title: "Penyisihan & Pengumpulan Karya",
-      desc: "Periode submisi karya utama (proposal/desain/link repositori) dan proses kurasi oleh dewan juri ahli.",
-      status: "upcoming"
-    },
-    {
-      date: "30 Agustus 2026",
-      title: "Pengumuman Finalis",
-      desc: "Publikasi tim yang berhasil lolos ke babak utama untuk mempresentasikan karya mereka di hadapan para juri.",
+      date: "01 – 25 Agustus 2026",
+      title: "Pendaftaran Lomba",
+      desc: "Masa pendaftaran dan pengunggahan berkas administratif untuk seluruh cabang kompetisi IT DAYS 2026.",
       status: "upcoming"
     },
     {
       date: "05 September 2026",
-      title: "Main Event & Awarding",
-      desc: "Puncak acara IT DAYS 2026: presentasi finalis, seminar nasional, pengumuman juara, dan sesi penutupan.",
+      title: "Technical Meeting",
+      desc: "Penjelasan regulasi, tata tertib, dan teknis pelaksanaan masing-masing cabang lomba.",
+      status: "upcoming"
+    },
+    {
+      date: "12 September 2026",
+      title: "Penyisihan ML & Badminton",
+      desc: "Babak kualifikasi awal untuk cabang kompetisi Mobile Legends dan Badminton.",
+      status: "upcoming"
+    },
+    {
+      date: "13 September 2026",
+      title: "Final ML & Badminton",
+      desc: "Babak final penentu juara untuk cabang kompetisi Mobile Legends dan Badminton.",
+      status: "upcoming"
+    },
+    {
+      date: "19 September 2026",
+      title: "Penyisihan PUBG",
+      desc: "Kualifikasi awal pertandingan cabang kompetisi PUBG.",
+      status: "upcoming"
+    },
+    {
+      date: "20 September 2026",
+      title: "Final PUBG",
+      desc: "Pertandingan final penentu pemenang untuk cabang kompetisi PUBG.",
+      status: "upcoming"
+    },
+    {
+      date: "23 September 2026",
+      title: "Deadline Pengumpulan UI/UX & Poster",
+      desc: "Batas akhir pengumpulan karya kreatif dan desain untuk cabang lomba UI/UX serta Poster.",
+      status: "upcoming"
+    },
+    {
+      date: "27 September 2026",
+      title: "Penilaian UI/UX & Poster",
+      desc: "Proses penjurian karya yang telah dikumpulkan untuk menentukan pemenang lomba UI/UX dan Poster.",
+      status: "upcoming"
+    },
+    {
+      date: "03 – 04 Oktober 2026",
+      title: "Penyisihan Futsal",
+      desc: "Babak penyisihan grup pertandingan futsal.",
+      status: "upcoming"
+    },
+    {
+      date: "04 Oktober 2026",
+      title: "Seleksi Web Dev",
+      desc: "Proses kurasi dan presentasi seleksi karya Web Development.",
+      status: "upcoming"
+    },
+    {
+      date: "10 Oktober 2026",
+      title: "Final Futsal",
+      desc: "Pertandingan final perebutan juara futsal.",
+      status: "upcoming"
+    },
+    {
+      date: "10 Oktober 2026",
+      title: "Final Web Dev",
+      desc: "Presentasi finalis dan penilaian akhir karya Web Development.",
+      status: "upcoming"
+    },
+    {
+      date: "17 Oktober 2026",
+      title: "Kompetisi Vocal",
+      desc: "Penampilan langsung peserta dan penjurian cabang lomba Vocal.",
+      status: "upcoming"
+    },
+    {
+      date: "24 Oktober 2026",
+      title: "Malam Apresiasi Mahasiswa",
+      desc: "Acara puncak penutupan IT DAYS 2026 dan penyerahan penghargaan kepada para pemenang.",
       status: "highlight"
     }
   ];

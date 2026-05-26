@@ -2,27 +2,41 @@
 
 :root {
   /* New Color Palette */
-  --primary-color: #28693C;
-  --accent-color: #D4AF37;
-  --background-color: #0d1210; /* Dark tech theme */
-  --text-primary: #f0f4f2;
-  --text-secondary: #9aa8a1;
+  --primary-color: #D7B43E;        /* Mustard Yellow */
+  --accent-color: #BA671D;         /* Golden Brown */
+  --background-color: #162B4C;     /* Navy Blue */
+  --text-primary: #FFFFFF;         /* White */
+  --text-secondary: rgba(255, 255, 255, 0.7);  /* Semi-transparent white */
+  --text-light: #FFFFFF;           /* White */
+  
+  /* Brand specific colors */
+  --color-mustard: #D7B43E;
+  --color-navy: #162B4C;
+  --color-bright-yellow: #FFDA00;
+  --color-white: #FFFFFF;
+  --color-fresh-green: #63A623;
+  --color-spicy-red: #CC2A14;
+  --color-golden-brown: #BA671D;
   
   /* Fonts */
   --font-display: 'JetBrains Mono', monospace;
   --font-body: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
   /* Theme properties */
-  --border-radius: 6px;
-  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  --box-shadow-glow: 0 0 15px rgba(40, 105, 60, 0.3);
-  --transition-smooth: all 0.2s ease-in-out;
+  --border-radius: 8px;
+  --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --box-shadow-glow: 0 0 20px rgba(215, 180, 62, 0.25);
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Backward compatibility map */
   --color-bg: var(--background-color);
   --color-text: var(--text-primary);
   --color-accent: var(--accent-color);
   --color-gray: var(--text-secondary);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 * {
@@ -34,10 +48,10 @@
 body {
   background-color: var(--background-color);
   background-image: 
-    radial-gradient(circle at top right, rgba(40, 105, 60, 0.15), transparent 40%),
-    radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.08), transparent 40%),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    radial-gradient(circle at top right, rgba(215, 180, 62, 0.15), transparent 50%),
+    radial-gradient(circle at bottom left, rgba(186, 103, 29, 0.1), transparent 50%),
+    linear-gradient(rgba(215, 180, 62, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(215, 180, 62, 0.06) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
   background-attachment: fixed;
   color: var(--color-text);
@@ -94,10 +108,11 @@ ul {
 
 /* Glassmorphism Utility */
 .glass-panel {
-  background: rgba(13, 18, 16, 0.7);
+  background: rgba(10, 20, 35, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(40, 105, 60, 0.3);
+  border: 1px solid rgba(215, 180, 62, 0.2);
   box-shadow: var(--box-shadow);
   border-radius: var(--border-radius);
+  color: var(--color-white);
 }

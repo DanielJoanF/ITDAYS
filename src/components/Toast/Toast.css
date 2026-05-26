@@ -1,36 +1,72 @@
 /* ── Toast Notification ────────────────────────────────────── */
 .reg-toast {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%) scale(0.95);
   font-family: var(--font-body);
-  font-size: 0.85rem;
-  padding: 1rem 1.5rem;
-  border-radius: var(--border-radius);
-  color: var(--color-text);
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  color: var(--color-white);
   z-index: 9999;
   opacity: 0;
-  transform: translateY(20px);
-  transition: var(--transition-smooth);
-  pointer-events: none;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: var(--box-shadow);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 90%;
+  width: 420px;
+  text-align: center;
+  line-height: 1.6;
 }
 
 .reg-toast.show {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.toast-icon {
+  font-size: 2.2rem;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin: 0 auto 1.2rem auto;
+  font-weight: bold;
+}
+
+.toast-message {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
 }
 
 .reg-toast.success {
-  background: rgba(40, 105, 60, 0.85); /* using primary-color variant for success */
-  border: 1px solid rgba(40, 105, 60, 0.5);
-  box-shadow: 0 0 10px rgba(40, 105, 60, 0.3);
+  background: rgba(15, 30, 20, 0.96);
+  border: 2px solid var(--color-fresh-green);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(99, 166, 35, 0.35);
+}
+
+.reg-toast.success .toast-icon {
+  background: rgba(99, 166, 35, 0.2);
+  color: var(--color-fresh-green);
+  border: 2px solid var(--color-fresh-green);
 }
 
 .reg-toast.error {
-  background: rgba(180, 40, 40, 0.85);
-  border: 1px solid rgba(180, 40, 40, 0.5);
-  box-shadow: 0 0 10px rgba(180, 40, 40, 0.3);
+  background: rgba(30, 15, 15, 0.96);
+  border: 2px solid var(--color-spicy-red);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(204, 42, 20, 0.35);
+}
+
+.reg-toast.error .toast-icon {
+  background: rgba(204, 42, 20, 0.2);
+  color: var(--color-spicy-red);
+  border: 2px solid var(--color-spicy-red);
 }

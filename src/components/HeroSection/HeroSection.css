@@ -37,7 +37,7 @@
 .countdown-label {
   font-family: var(--font-display);
   font-size: 1rem;
-  color: var(--accent-color);
+  color: var(--color-bright-yellow);
   margin-bottom: 2rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -61,14 +61,14 @@
   font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--color-white);
   line-height: 1;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 .time-label {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.6);
   margin-top: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -78,7 +78,7 @@
 .time-separator {
   font-family: var(--font-display);
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--color-bright-yellow);
   margin-bottom: 2rem;
   animation: pulse 1s infinite alternate;
 }

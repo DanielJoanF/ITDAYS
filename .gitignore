@@ -26,6 +26,7 @@ ai-system-context.md
 AGENT.md
 .env
 .env.example
+google-apps-script.gs
 
 # Hidden secret configurations
 .config/settings/.env
