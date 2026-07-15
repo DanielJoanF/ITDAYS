@@ -138,10 +138,10 @@ export default function RegistrationSection() {
         [COL.ANGGOTA]: teamMembers.filter((m) => m.trim()).join(', '),
         [COL.ID_GAME]: (formData.id_game || '').trim(),
         [COL.NICKNAME]: (formData.nickname || '').trim(),
-        [COL.FIGMA_LINK]: (formData.figma_link || '').trim(),
-        [COL.GITHUB_LINK]: (formData.github_link || '').trim(),
-        [COL.DRIVE_PPT]: (formData.presentation_drive_link || '').trim(),
-        [COL.DRIVE_POSTER]: (formData.poster_drive_link || '').trim(),
+        [COL.FIGMA_LINK]: '',
+        [COL.GITHUB_LINK]: '',
+        [COL.DRIVE_PPT]: '',
+        [COL.DRIVE_POSTER]: '',
         [COL.KTM]: ktmEncoded,
         [COL.BUKTI_BAYAR]: paymentEncoded,
       };
@@ -158,7 +158,7 @@ export default function RegistrationSection() {
         body: formBody,
       });
 
-      showToast('Pendaftaran berhasil dikirim! Silakan cek email Anda untuk bergabung ke dalam grup WhatsApp.', 'success');
+      showToast('Pendaftaran berhasil disimpan! Silakan tunggu verifikasi admin. Link upload karya dan link grup WhatsApp akan dikirimkan ke email Anda setelah pembayaran dikonfirmasi.', 'success');
       setFormData({});
       setTeamMembers([]);
       setKtmFile(null);

@@ -27,6 +27,7 @@ AGENT.md
 .env
 .env.example
 google-apps-script.gs
+analysis_registration_flow.md
 
 # Hidden secret configurations
 .config/settings/.env

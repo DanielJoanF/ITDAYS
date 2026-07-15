@@ -6,7 +6,8 @@
  *   - Each branch has:
  *     - name:       display name
  *     - teamSize:   { min, max } — total participants including leader
- *     - extraFields: field tambahan spesifik per cabang
+ *     - extraFields:  field tambahan spesifik per cabang (diisi saat registrasi)
+ *     - uploadFields: field link karya (diisi saat upload, setelah verifikasi admin)
  *
  * Field object shape:
  *   { name, label, type, placeholder, required?, pattern?, patternHint? }
@@ -24,6 +25,7 @@ export const CATEGORIES = {
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
         ],
+        uploadFields: [],
       },
       {
         name: 'Futsal',
@@ -31,6 +33,7 @@ export const CATEGORIES = {
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
         ],
+        uploadFields: [],
       },
     ],
   },
@@ -44,6 +47,7 @@ export const CATEGORIES = {
           { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
           { name: 'nickname', label: 'Nickname In-Game', type: 'text', placeholder: 'Nickname kapten', required: true },
         ],
+        uploadFields: [],
       },
       {
         name: 'PUBG',
@@ -53,6 +57,7 @@ export const CATEGORIES = {
           { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
           { name: 'nickname', label: 'Nickname In-Game', type: 'text', placeholder: 'Nickname kapten', required: true },
         ],
+        uploadFields: [],
       },
     ],
   },
@@ -61,7 +66,8 @@ export const CATEGORIES = {
       {
         name: 'UI/UX',
         teamSize: { min: 1, max: 1 },
-        extraFields: [
+        extraFields: [],
+        uploadFields: [
           {
             name: 'figma_link',
             label: 'Link Figma Project',
@@ -78,6 +84,8 @@ export const CATEGORIES = {
         teamSize: { min: 2, max: 3 },
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+        ],
+        uploadFields: [
           {
             name: 'github_link',
             label: 'Link Repository GitHub',
@@ -105,7 +113,8 @@ export const CATEGORIES = {
       {
         name: 'Poster',
         teamSize: { min: 1, max: 1 },
-        extraFields: [
+        extraFields: [],
+        uploadFields: [
           {
             name: 'poster_drive_link',
             label: 'Link Google Drive (Hasil Poster)',
@@ -121,6 +130,7 @@ export const CATEGORIES = {
         name: 'Vocal',
         teamSize: { min: 1, max: 1 },
         extraFields: [],
+        uploadFields: [],
       },
     ],
   },
@@ -135,4 +145,15 @@ export function getBranchConfig(categoryKey, branchName) {
   const cat = CATEGORIES[categoryKey];
   if (!cat) return null;
   return cat.branches.find((b) => b.name === branchName) || null;
+}
+
+/**
+ * Helper: find branch config by branch name across all categories.
+ */
+export function getBranchByName(branchName) {
+  for (const cat of Object.values(CATEGORIES)) {
+    const branch = cat.branches.find((b) => b.name === branchName);
+    if (branch) return branch;
+  }
+  return null;
 }
