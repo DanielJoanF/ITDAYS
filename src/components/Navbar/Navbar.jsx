@@ -48,6 +48,16 @@ const Navbar = () => {
           <li className="nav-item">
             <a href="#registration" className={`nav-link ${activeSection === 'registration' ? 'active' : ''}`}>Pendaftaran</a>
           </li>
+          <li className="nav-item">
+            <a 
+              href="https://docs.google.com/document/d/1mv1nM7cxvZ7gLDJpHmMSlIG9MDVm1kzuAT-TfqJpyuk/edit?usp=drivesdk" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="nav-link"
+            >
+              Peraturan
+            </a>
+          </li>
         </ul>
       </div>
     </nav>

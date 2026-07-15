@@ -81,7 +81,7 @@ const TimelineSection = () => {
       status: "upcoming"
     },
     {
-      date: "24 Oktober 2026",
+      date: "18 Oktober 2026",
       title: "Malam Apresiasi Mahasiswa",
       desc: "Acara puncak penutupan IT DAYS 2026 dan penyerahan penghargaan kepada para pemenang.",
       status: "highlight"

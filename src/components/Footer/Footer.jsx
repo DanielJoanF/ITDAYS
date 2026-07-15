@@ -18,6 +18,15 @@ const Footer = () => {
               <li><a href="#about">Tentang</a></li>
               <li><a href="#timeline">Timeline</a></li>
               <li><a href="#registration">Pendaftaran</a></li>
+              <li>
+                <a 
+                  href="https://docs.google.com/document/d/1mv1nM7cxvZ7gLDJpHmMSlIG9MDVm1kzuAT-TfqJpyuk/edit?usp=drivesdk" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Peraturan
+                </a>
+              </li>
             </ul>
           </div>
           <div className="footer-col">
