@@ -1,10 +1,37 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { CATEGORIES, CATEGORY_KEYS } from '../../data/categories';
 import { validateForm, fileToBase64 } from '../../utils/validation';
 import Toast from '../Toast/Toast';
 import './RegistrationSection.css';
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+// Endpoint API Vercel (middleware keamanan)
+const API_ENDPOINT = '/api/submit-registration';
+
+// Site key reCAPTCHA v3 (public — aman di client)
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+/**
+ * Mengeksekusi reCAPTCHA v3 dan mengembalikan token.
+ * Jika reCAPTCHA belum siap atau gagal, return null.
+ */
+function executeRecaptcha(action) {
+  return new Promise((resolve) => {
+    if (!window.grecaptcha || !RECAPTCHA_SITE_KEY) {
+      console.warn('[reCAPTCHA] grecaptcha belum siap atau SITE_KEY belum dikonfigurasi.');
+      resolve(null);
+      return;
+    }
+    window.grecaptcha.ready(() => {
+      window.grecaptcha
+        .execute(RECAPTCHA_SITE_KEY, { action })
+        .then(resolve)
+        .catch((err) => {
+          console.error('[reCAPTCHA] Gagal execute:', err);
+          resolve(null);
+        });
+    });
+  });
+}
 
 const COL = {
   TIMESTAMP:    "Timestamp",
@@ -35,6 +62,8 @@ export default function RegistrationSection() {
   const [paymentFile, setPaymentFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  // Honeypot ref — tidak dirender sebagai state agar tidak memicu re-render
+  const honeypotRef = useRef('');
 
   const categoryData = CATEGORIES[activeCategory];
   const activeBranch = categoryData.branches[activeBranchIdx] || categoryData.branches[0];
@@ -96,7 +125,7 @@ export default function RegistrationSection() {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
-    // Run validation
+    // ── Validasi form ──
     const { valid, errors } = validateForm({
       formData,
       teamMembers,
@@ -110,24 +139,27 @@ export default function RegistrationSection() {
       return;
     }
 
-    if (!GOOGLE_SCRIPT_URL) {
-      console.warn('[PENDAFTARAN] GOOGLE_SCRIPT_URL belum diisi.');
-      showToast('URL belum dikonfigurasi. Cek console.', 'error');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // Encode files to base64 objects { name, type, data }
+      // ── Dapatkan token reCAPTCHA v3 (invisible) ──
+      const recaptchaToken = await executeRecaptcha('submit_registration');
+
+      // Jika reCAPTCHA gagal load (misal AdBlocker), tetap lanjutkan.
+      // Server akan menangani jika token null/invalid.
+      if (!recaptchaToken) {
+        console.warn('[reCAPTCHA] Token tidak didapatkan. Melanjutkan tanpa token...');
+      }
+
+      // ── Encode file ke base64 ──
       const [ktmEncoded, paymentEncoded] = await Promise.all([
         fileToBase64(ktmFile),
         fileToBase64(paymentFile),
       ]);
 
-      // Build spreadsheet payload matching the Google Apps Script COL keys exactly
+      // ── Bangun payload Google Sheets ──
       const payload = {
-        [COL.TIMESTAMP]: new Date().toLocaleString("id-ID"),
+        [COL.TIMESTAMP]: new Date().toLocaleString('id-ID'),
         [COL.NAMA]: formData.nama.trim(),
         [COL.EMAIL]: formData.email.trim(),
         [COL.NO_HP]: formData.whatsapp.trim(),
@@ -146,26 +178,39 @@ export default function RegistrationSection() {
         [COL.BUKTI_BAYAR]: paymentEncoded,
       };
 
-      // Gunakan URLSearchParams agar request menjadi "simple request"
-      // yang bisa melewati CORS tanpa preflight di mode no-cors.
-      // Google Apps Script membaca payload via e.parameter.payload.
-      const formBody = new URLSearchParams();
-      formBody.append('payload', JSON.stringify(payload));
-
-      await fetch(GOOGLE_SCRIPT_URL, {
+      // ── Kirim ke Vercel API (middleware keamanan) ──
+      const res = await fetch(API_ENDPOINT, {
         method: 'POST',
-        mode: 'no-cors',
-        body: formBody,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recaptchaToken,
+          honeypot: honeypotRef.current,  // Honeypot: string kosong = manusia
+          payload,
+        }),
       });
 
-      showToast('Pendaftaran berhasil disimpan! Silakan tunggu verifikasi admin. Link upload karya dan link grup WhatsApp akan dikirimkan ke email Anda setelah pembayaran dikonfirmasi.', 'success');
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // Tampilkan pesan error dari server jika ada
+        const serverMsg = data?.error || 'Gagal mengirim. Silakan coba lagi.';
+        showToast(serverMsg, 'error');
+        return;
+      }
+
+      showToast(
+        'Pendaftaran berhasil disimpan! Silakan tunggu verifikasi admin. ' +
+        'Link upload karya dan link grup WhatsApp akan dikirimkan ke email Anda setelah pembayaran dikonfirmasi.',
+        'success'
+      );
       setFormData({});
       setTeamMembers([]);
       setKtmFile(null);
       setPaymentFile(null);
+      honeypotRef.current = '';
     } catch (err) {
       console.error('[PENDAFTARAN] Error:', err);
-      showToast('Gagal mengirim. Silakan coba lagi.', 'error');
+      showToast('Gagal mengirim. Periksa koneksi internet dan coba lagi.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -232,6 +277,26 @@ export default function RegistrationSection() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+
+          {/*
+            ── Honeypot field (Anti-bot, Lapisan 3) ──────────────────────
+            Field ini SENGAJA disembunyikan dari user biasa menggunakan
+            CSS (aria-hidden + tabIndex -1 + style display:none).
+            Bot yang mengisi form secara otomatis akan mengisi field ini,
+            dan server akan mendeteksinya sebagai bot.
+          */}
+          <div aria-hidden="true" style={{ display: 'none' }}>
+            <label htmlFor="hp-website">Website (jangan diisi)</label>
+            <input
+              id="hp-website"
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypotRef.current}
+              onChange={(e) => { honeypotRef.current = e.target.value; }}
+            />
+          </div>
 
           {/* ── Common Fields ────────────────────────────────── */}
           <div className="form-grid">
