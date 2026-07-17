@@ -1,16 +1,20 @@
 /**
  * Vercel Serverless Function — /api/submit-registration
  *
- * Middleware keamanan antara browser dan Google Apps Script:
+ * Tugasnya HANYA verifikasi keamanan (tidak forward payload ke Google):
  * 1. Cek honeypot field (anti-bot sederhana)
- * 2. Verifikasi token reCAPTCHA v3 ke Google API
- * 3. Tolak jika skor < 0.5 (kemungkinan bot)
- * 4. Rate limiting sederhana per IP via header
- * 5. Forward payload ke Google Apps Script jika lolos semua pengecekan
+ * 2. Rate limiting per IP
+ * 3. Verifikasi token reCAPTCHA v3 ke Google API
+ *
+ * Jika semua lolos → return { ok: true }
+ * Client kemudian submit payload (dengan file) langsung ke Google Apps Script.
+ *
+ * Alasan arsitektur ini:
+ * File base64 bisa mencapai ~13MB (dua file 5MB), melebihi limit Vercel Free (4.5MB).
+ * Dengan memisahkan verifikasi dan pengiriman data, kita menghindari 413 error.
  */
 
 const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
-const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
 const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
 
 // Skor minimum reCAPTCHA yang diterima (0.0 = bot pasti, 1.0 = manusia pasti)

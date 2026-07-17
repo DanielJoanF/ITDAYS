@@ -4,8 +4,11 @@ import { validateForm, fileToBase64 } from '../../utils/validation';
 import Toast from '../Toast/Toast';
 import './RegistrationSection.css';
 
-// Endpoint API Vercel (middleware keamanan)
-const API_ENDPOINT = '/api/submit-registration';
+// Step 1: Endpoint Vercel untuk verifikasi reCAPTCHA (payload kecil, no files)
+const VERIFY_ENDPOINT = '/api/submit-registration';
+
+// Step 2: Google Apps Script untuk submit data + file (direct, no-cors)
+const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
 
 // Site key reCAPTCHA v3 (public — aman di client)
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
@@ -142,22 +145,43 @@ export default function RegistrationSection() {
     setIsSubmitting(true);
 
     try {
-      // ── Dapatkan token reCAPTCHA v3 (invisible) ──
+      // ── STEP 1: Verifikasi reCAPTCHA di Vercel (payload kecil, tanpa file) ──
       const recaptchaToken = await executeRecaptcha('submit_registration');
 
-      // Jika reCAPTCHA gagal load (misal AdBlocker), tetap lanjutkan.
-      // Server akan menangani jika token null/invalid.
       if (!recaptchaToken) {
-        console.warn('[reCAPTCHA] Token tidak didapatkan. Melanjutkan tanpa token...');
+        console.warn('[reCAPTCHA] Token tidak didapatkan.');
       }
 
-      // ── Encode file ke base64 ──
+      const verifyRes = await fetch(VERIFY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recaptchaToken,
+          honeypot: honeypotRef.current, // string kosong = manusia
+        }),
+      });
+
+      const verifyData = await verifyRes.json().catch(() => ({}));
+
+      if (!verifyRes.ok) {
+        const msg = verifyData?.error || 'Verifikasi keamanan gagal. Coba lagi.';
+        showToast(msg, 'error');
+        return;
+      }
+
+      // ── STEP 2: Encode file & submit langsung ke Google Apps Script ──
+      // File base64 bisa mencapai ~13MB — dikirim langsung, bukan lewat Vercel.
+      if (!GOOGLE_SCRIPT_URL) {
+        console.warn('[PENDAFTARAN] VITE_GOOGLE_SCRIPT_URL belum dikonfigurasi.');
+        showToast('Konfigurasi URL belum lengkap. Hubungi panitia.', 'error');
+        return;
+      }
+
       const [ktmEncoded, paymentEncoded] = await Promise.all([
         fileToBase64(ktmFile),
         fileToBase64(paymentFile),
       ]);
 
-      // ── Bangun payload Google Sheets ──
       const payload = {
         [COL.TIMESTAMP]: new Date().toLocaleString('id-ID'),
         [COL.NAMA]: formData.nama.trim(),
@@ -178,25 +202,15 @@ export default function RegistrationSection() {
         [COL.BUKTI_BAYAR]: paymentEncoded,
       };
 
-      // ── Kirim ke Vercel API (middleware keamanan) ──
-      const res = await fetch(API_ENDPOINT, {
+      const formBody = new URLSearchParams();
+      formBody.append('payload', JSON.stringify(payload));
+
+      // no-cors: Google Apps Script tidak support CORS, ini sudah benar
+      await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recaptchaToken,
-          honeypot: honeypotRef.current,  // Honeypot: string kosong = manusia
-          payload,
-        }),
+        mode: 'no-cors',
+        body: formBody,
       });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        // Tampilkan pesan error dari server jika ada
-        const serverMsg = data?.error || 'Gagal mengirim. Silakan coba lagi.';
-        showToast(serverMsg, 'error');
-        return;
-      }
 
       showToast(
         'Pendaftaran berhasil disimpan! Silakan tunggu verifikasi admin. ' +
