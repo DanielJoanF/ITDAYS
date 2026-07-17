@@ -6,23 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="IT Days USD — Festival lomba teknologi dan kompetisi digital tingkat nasional. Daftarkan tim kamu sekarang!" />
     <title>IT Days USD — Festival Lomba Teknologi</title>
-
-    <!--
-      reCAPTCHA v3 — Script ini dimuat secara asynchronous agar tidak
-      memblokir render halaman. Site key dibaca dari env variable saat build.
-      Ganti YOUR_RECAPTCHA_SITE_KEY dengan site key aslimu dari:
-      https://www.google.com/recaptcha/admin
-    -->
-    <script>
-      // Inject site key dari Vite env var ke window global
-      // agar bisa diakses oleh reCAPTCHA callback
-      window.__RECAPTCHA_SITE_KEY__ = "%VITE_RECAPTCHA_SITE_KEY%";
-    </script>
-    <script
-      src="https://www.google.com/recaptcha/api.js?render=%VITE_RECAPTCHA_SITE_KEY%"
-      async
-      defer
-    ></script>
   </head>
   <body>
     <div id="root"></div>
