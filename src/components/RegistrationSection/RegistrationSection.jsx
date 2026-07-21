@@ -54,6 +54,8 @@ const COL = {
   DRIVE_POSTER: "Link Google Drive (Hasil Poster)",
   KTM:          "Foto KTM / Kartu Tanda Siswa",
   BUKTI_BAYAR:  "Link Bukti Pembayaran",
+  OFFICIAL_1:   "Official 1",
+  OFFICIAL_2:   "Official 2",
 };
 
 export default function RegistrationSection() {
@@ -194,6 +196,8 @@ export default function RegistrationSection() {
         [COL.ANGGOTA]: teamMembers.filter((m) => m.trim()).join(', '),
         [COL.ID_GAME]: (formData.id_game || '').trim(),
         [COL.NICKNAME]: (formData.nickname || '').trim(),
+        [COL.OFFICIAL_1]: (formData.official_1 || '').trim(),
+        [COL.OFFICIAL_2]: (formData.official_2 || '').trim(),
         [COL.FIGMA_LINK]: '',
         [COL.GITHUB_LINK]: '',
         [COL.DRIVE_PPT]: '',

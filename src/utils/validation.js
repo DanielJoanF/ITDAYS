@@ -51,6 +51,14 @@ export function validateForm({ formData, teamMembers, branchConfig, ktmFile, pay
       }
     }
 
+    // Pastikan semua slot anggota yang wajib diisi tidak kosong
+    for (let i = 2; i <= min; i++) {
+      const memberVal = (teamMembers[i - 2] || '').trim();
+      if (!memberVal) {
+        errors.push(`Nama Anggota ${i} wajib diisi.`);
+      }
+    }
+
     // ─── Extra fields validation ────────────────────────────────
     branchConfig.extraFields.forEach((f) => {
       const value = (formData[f.name] || '').trim();

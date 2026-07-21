@@ -10,8 +10,8 @@
 // ----------------------------------------------------------------
 
 const CONFIG = {
-  EVENT_NAME:      "IT Days 2025",
-  EVENT_ORGANIZER: "Panitia IT Days 2025",
+  EVENT_NAME:      "IT Days 2026",
+  EVENT_ORGANIZER: "Panitia IT Days 2026",
   PANITIA_EMAIL:   "usditdays@gmail.com",
   REPLY_TO:        "usditdays@gmail.com",
 
@@ -55,6 +55,8 @@ const COL = {
   DRIVE_POSTER: "Link Google Drive (Hasil Poster)",
   KTM:          "Foto KTM / Kartu Tanda Siswa",   // tipe File Upload di Form
   BUKTI_BAYAR:  "Link Bukti Pembayaran",
+  OFFICIAL_1:   "Official 1",
+  OFFICIAL_2:   "Official 2",
 };
 
 // ----------------------------------------------------------------
@@ -74,23 +76,23 @@ const LOMBA_SHEETS = {
   },
   "Futsal": {
     sheetName: "Futsal",
-    extraCols: ["Nama Tim", "Anggota (8-10 Orang)"],
-    fillExtra: (d) => [d.namaTim, d.anggota],
+    extraCols: ["Nama Tim", "Anggota (10-12 Orang)", "Official 1", "Official 2"],
+    fillExtra: (d) => [d.namaTim, d.anggota, d.official1, d.official2],
   },
   "Mobile Legends": {
     sheetName: "Mobile Legends",
-    extraCols: ["Nama Tim", "Anggota (7 Orang)", "ID Game Kapten", "Nickname Kapten"],
+    extraCols: ["Nama Tim", "Anggota (5-7 Orang)", "ID Game Kapten", "Nickname Kapten"],
     fillExtra: (d) => [d.namaTim, d.anggota, d.idGame, d.nickname],
   },
   "PUBG": {
     sheetName: "PUBG",
-    extraCols: ["Nama Tim", "Anggota (5 Orang)", "ID Game Kapten", "Nickname Kapten"],
+    extraCols: ["Nama Tim", "Anggota (4-5 Orang)", "ID Game Kapten", "Nickname Kapten"],
     fillExtra: (d) => [d.namaTim, d.anggota, d.idGame, d.nickname],
   },
   "UI/UX": {
     sheetName: "UI/UX",
-    extraCols: [],
-    fillExtra: (d) => [],
+    extraCols: ["Nama Tim", "Anggota (2-3 Orang)"],
+    fillExtra: (d) => [d.namaTim, d.anggota],
     uploadCols: ["Link Figma"],
   },
   "Web Dev": {
@@ -117,7 +119,7 @@ const LOMBA_SHEETS = {
 const REKAP_HEADERS = [
   "No", "Timestamp", "Nama", "Email", "No. WA", "Instansi",
   "Kategori", "Cabang", "Nama Tim", "Anggota",
-  "ID Game", "Nickname", "Link Figma", "Link GitHub",
+  "ID Game", "Nickname", "Official 1", "Official 2", "Link Figma", "Link GitHub",
   "Link Drive PPT", "Link Drive Poster",
   "KTM", "Bukti Bayar", "Status", "Email Terkirim",
 ];
@@ -265,6 +267,8 @@ function extractFormData(responses) {
     anggota:     get(COL.ANGGOTA),
     idGame:      get(COL.ID_GAME),
     nickname:    get(COL.NICKNAME),
+    official1:   get(COL.OFFICIAL_1),
+    official2:   get(COL.OFFICIAL_2),
     figmaLink:   get(COL.FIGMA_LINK),
     githubLink:  get(COL.GITHUB_LINK),
     drivePpt:    get(COL.DRIVE_PPT),
@@ -340,7 +344,8 @@ function appendToRekap(sheet, d) {
     lastRow,
     d.timestamp, d.nama, d.email, d.noHp, d.instansi,
     d.kategori, d.cabang, d.namaTim, d.anggota,
-    d.idGame, d.nickname, d.figmaLink, d.githubLink,
+    d.idGame, d.nickname, d.official1, d.official2,
+    d.figmaLink, d.githubLink,
     d.drivePpt, d.drivePoster,
     d.ktm, d.buktiByar,
     "Menunggu Verifikasi", "Menunggu",
@@ -519,6 +524,8 @@ function buildSummaryRows(d) {
   if (d.anggota)  row("Anggota Tim",     d.anggota.split(",").map(s => s.trim()).join("<br>"));
   if (d.idGame)   row("ID Game Kapten",  d.idGame);
   if (d.nickname) row("Nickname Kapten", d.nickname);
+  if (d.official1) row("Official 1",     d.official1);
+  if (d.official2) row("Official 2",     d.official2);
 
   linkRow("Link Figma",         d.figmaLink,   "Lihat Project Figma");
   linkRow("Link GitHub",        d.githubLink,  "Lihat Repository");
@@ -548,6 +555,8 @@ function buildPlainEmail(d, waLink) {
   if (d.anggota)    t += `Anggota   : ${d.anggota}\n`;
   if (d.idGame)     t += `ID Game   : ${d.idGame}\n`;
   if (d.nickname)   t += `Nickname  : ${d.nickname}\n`;
+  if (d.official1)  t += `Official 1: ${d.official1}\n`;
+  if (d.official2)  t += `Official 2: ${d.official2}\n`;
   if (d.figmaLink)  t += `Figma     : ${d.figmaLink}\n`;
   if (d.githubLink) t += `GitHub    : ${d.githubLink}\n`;
   if (d.drivePpt)   t += `Drive PPT : ${d.drivePpt}\n`;
@@ -712,10 +721,13 @@ function kirimUlangEmail() {
     cabang:      cabangMap[sheet.getName()] || sheet.getName(),
     namaTim:     get("Nama Tim"),
     anggota:     get("Anggota (2 Orang)") || get("Anggota (5 Orang)") ||
-                 get("Anggota (7 Orang)") || get("Anggota (8-10 Orang)") ||
-                 get("Anggota (2-3 Orang)"),
+                 get("Anggota (7 Orang)") || get("Anggota (5-7 Orang)") ||
+                 get("Anggota (8-10 Orang)") || get("Anggota (10-12 Orang)") ||
+                 get("Anggota (2-3 Orang)") || get("Anggota (4-5 Orang)"),
     idGame:      get("ID Game Kapten"),
     nickname:    get("Nickname Kapten"),
+    official1:   get("Official 1"),
+    official2:   get("Official 2"),
     figmaLink:   get("Link Figma"),
     githubLink:  get("Link GitHub"),
     drivePpt:    get("Link Drive PPT"),

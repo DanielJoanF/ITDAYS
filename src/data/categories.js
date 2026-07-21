@@ -29,9 +29,11 @@ export const CATEGORIES = {
       },
       {
         name: 'Futsal',
-        teamSize: { min: 8, max: 10 },
+        teamSize: { min: 10, max: 12 },
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+          { name: 'official_1', label: 'Official 1 (Wajib)', type: 'text', placeholder: 'Nama official 1', required: true },
+          { name: 'official_2', label: 'Official 2 (Opsional)', type: 'text', placeholder: 'Nama official 2 (opsional)', required: false },
         ],
         uploadFields: [],
       },
@@ -41,7 +43,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Mobile Legends',
-        teamSize: { min: 7, max: 7 },
+        teamSize: { min: 5, max: 7 },
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
           { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
@@ -51,7 +53,7 @@ export const CATEGORIES = {
       },
       {
         name: 'PUBG',
-        teamSize: { min: 5, max: 5 },
+        teamSize: { min: 4, max: 5 },
         extraFields: [
           { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
           { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
@@ -65,8 +67,10 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'UI/UX',
-        teamSize: { min: 1, max: 1 },
-        extraFields: [],
+        teamSize: { min: 2, max: 3 },
+        extraFields: [
+          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+        ],
         uploadFields: [
           {
             name: 'figma_link',

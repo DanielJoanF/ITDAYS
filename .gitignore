@@ -32,3 +32,5 @@ analysis_registration_flow.md
 # Hidden secret configurations
 .config/settings/.env
 !.config/settings/.env.example
+.vercel
+.env*
