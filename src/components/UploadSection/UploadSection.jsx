@@ -8,68 +8,96 @@ const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
 
 export default function UploadSection() {
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email') || '';
-  const cabang = searchParams.get('cabang') || '';
+  const initialEmail = searchParams.get('email') || '';
+  const initialCabang = searchParams.get('cabang') || '';
 
-  const [status, setStatus] = useState('loading'); // loading | allowed | denied | success | error
+  const [inputEmail, setInputEmail] = useState(initialEmail);
+  const [participantData, setParticipantData] = useState(null); // { email, nama, cabang, fields }
+  
+  // Status: 'verify_email' | 'loading' | 'allowed' | 'denied' | 'success' | 'error'
+  const [status, setStatus] = useState(initialEmail ? 'loading' : 'verify_email');
   const [reason, setReason] = useState('');
   const [formData, setFormData] = useState({});
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
-
-  // Get branch config for dynamic upload fields
-  const branchConfig = getBranchByName(cabang);
-  const uploadFields = branchConfig?.uploadFields || [];
-
-  // Check upload eligibility on mount
-  useEffect(() => {
-    if (!email || !cabang) {
-      setStatus('denied');
-      setReason('Parameter email dan cabang tidak ditemukan di URL.');
-      return;
-    }
-
-    if (!GOOGLE_SCRIPT_URL) {
-      setStatus('error');
-      setReason('Konfigurasi URL belum diatur.');
-      return;
-    }
-
-    const checkStatus = async () => {
-      try {
-        const url = `${GOOGLE_SCRIPT_URL}?email=${encodeURIComponent(email)}&cabang=${encodeURIComponent(cabang)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.allowed) {
-          setStatus('allowed');
-        } else {
-          setStatus('denied');
-          setReason(data.reason || 'Tidak diizinkan untuk upload.');
-        }
-      } catch (err) {
-        console.error('[UPLOAD] Fetch error:', err);
-        setStatus('error');
-        setReason('Gagal menghubungi server. Silakan coba lagi nanti.');
-      }
-    };
-
-    checkStatus();
-  }, [email, cabang]);
 
   const showToast = useCallback((message, type) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 6000);
   }, []);
 
+  // Check email eligibility function
+  const checkEmailEligibility = useCallback(async (targetEmail, targetCabang = '') => {
+    if (!targetEmail || !targetEmail.trim()) {
+      showToast('Masukkan alamat email Anda yang terdaftar.', 'error');
+      return;
+    }
+
+    if (!GOOGLE_SCRIPT_URL) {
+      setStatus('error');
+      setReason('Konfigurasi URL Backend (VITE_GOOGLE_SCRIPT_URL) belum diatur.');
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    setStatus('loading');
+
+    try {
+      let url = `${GOOGLE_SCRIPT_URL}?email=${encodeURIComponent(targetEmail.trim())}`;
+      if (targetCabang) {
+        url += `&cabang=${encodeURIComponent(targetCabang.trim())}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.allowed) {
+        setParticipantData({
+          email: data.email || targetEmail,
+          nama: data.nama || 'Peserta',
+          cabang: data.cabang,
+          fields: data.fields || [],
+        });
+        setStatus('allowed');
+      } else {
+        setStatus('denied');
+        setReason(data.reason || 'Email ini tidak memenuhi syarat upload karya.');
+      }
+    } catch (err) {
+      console.error('[UPLOAD] Fetch error:', err);
+      setStatus('error');
+      setReason('Gagal menghubungi server backend. Silakan periksa koneksi internet Anda dan coba lagi.');
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  }, [showToast]);
+
+  // Initial check if URL has query parameters
+  useEffect(() => {
+    if (initialEmail) {
+      checkEmailEligibility(initialEmail, initialCabang);
+    }
+  }, [initialEmail, initialCabang, checkEmailEligibility]);
+
+  const handleVerifySubmit = (e) => {
+    e.preventDefault();
+    checkEmailEligibility(inputEmail);
+  };
+
   const handleInputChange = useCallback((name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
+  // Determine dynamic fields based on branch config
+  const branchConfig = participantData ? getBranchByName(participantData.cabang) : null;
+  const uploadFields = branchConfig?.uploadFields || [];
 
-    // Validate all upload fields
+  const handleSubmitKarya = useCallback(async (e) => {
+    e.preventDefault();
+    if (!participantData) return;
+
+    // Validate inputs
     for (const f of uploadFields) {
       const value = (formData[f.name] || '').trim();
       if (f.required && !value) {
@@ -83,21 +111,19 @@ export default function UploadSection() {
     }
 
     if (!GOOGLE_SCRIPT_URL) {
-      showToast('URL belum dikonfigurasi.', 'error');
+      showToast('URL backend belum dikonfigurasi.', 'error');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Build upload payload
       const payload = {
         action: 'upload',
-        email: email,
-        cabang: cabang,
+        email: participantData.email,
+        cabang: participantData.cabang,
       };
 
-      // Add each upload field value
       for (const f of uploadFields) {
         payload[f.name] = (formData[f.name] || '').trim();
       }
@@ -114,13 +140,18 @@ export default function UploadSection() {
       setStatus('success');
     } catch (err) {
       console.error('[UPLOAD] Submit error:', err);
-      showToast('Gagal mengirim. Silakan coba lagi.', 'error');
+      showToast('Gagal mengirim karya. Silakan coba lagi.', 'error');
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, uploadFields, email, cabang, showToast]);
+  }, [formData, uploadFields, participantData, showToast]);
 
-  // ─── render ──────────────────────────────────────────────────
+  const handleResetSearch = () => {
+    setStatus('verify_email');
+    setParticipantData(null);
+    setFormData({});
+    setReason('');
+  };
 
   return (
     <section className="upload-section">
@@ -130,57 +161,100 @@ export default function UploadSection() {
         <div className="upload-header">
           <h1 className="upload-title text-display">UPLOAD<br />KARYA</h1>
           <p className="upload-subtitle">
-            {status === 'allowed'
-              ? `Upload link karya lomba ${cabang} untuk email ${email}.`
-              : 'Verifikasi status pendaftaran...'}
+            {status === 'allowed' && participantData
+              ? `Pengunggahan karya lomba ${participantData.cabang} atas nama ${participantData.nama}.`
+              : 'Verifikasi akun dan upload karya lomba IT Days.'}
           </p>
         </div>
 
-        {/* Loading */}
+        {/* Step 1: Input & Verifikasi Email */}
+        {status === 'verify_email' && (
+          <div className="upload-panel glass-panel">
+            <h2 className="upload-step-title">Verifikasi Pendaftaran</h2>
+            <p className="upload-step-desc">
+              Masukkan alamat email yang Anda gunakan saat mendaftar lomba IT Days.
+            </p>
+
+            <form onSubmit={handleVerifySubmit} autoComplete="off">
+              <div className="field-group">
+                <label className="field-label" htmlFor="verify-email">Email Terdaftar</label>
+                <input
+                  type="email"
+                  id="verify-email"
+                  className="main-input"
+                  placeholder="contoh: nama@email.com"
+                  value={inputEmail}
+                  onChange={(e) => setInputEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="upload-controls">
+                <button
+                  type="submit"
+                  className="upload-btn"
+                  disabled={isCheckingEmail}
+                >
+                  {isCheckingEmail ? 'MEMERIKSA...' : 'VERIFIKASI EMAIL'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Loading State */}
         {status === 'loading' && (
           <div className="upload-panel glass-panel">
             <div className="upload-loading">
               <div className="upload-spinner" />
-              <p>Memeriksa status pendaftaran...</p>
+              <p>Memeriksa status verifikasi pendaftaran di database...</p>
             </div>
           </div>
         )}
 
-        {/* Denied / Error */}
+        {/* Denied / Error State */}
         {(status === 'denied' || status === 'error') && (
           <div className="upload-panel glass-panel">
             <div className="upload-error">
               <span className="upload-error-icon">{status === 'error' ? '⚠️' : '🚫'}</span>
               <h2>{status === 'error' ? 'TERJADI KESALAHAN' : 'AKSES DITOLAK'}</h2>
               <p>{reason}</p>
-              <Link to="/" className="upload-home-link">KEMBALI KE BERANDA</Link>
+              <div className="upload-error-actions">
+                <button type="button" onClick={handleResetSearch} className="upload-retry-btn">
+                  COBA EMAIL LAIN
+                </button>
+                <Link to="/" className="upload-home-link">KEMBALI KE BERANDA</Link>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Success */}
+        {/* Success State */}
         {status === 'success' && (
           <div className="upload-panel glass-panel">
             <div className="upload-success">
               <span className="upload-success-icon">✅</span>
-              <h2>UPLOAD BERHASIL</h2>
+              <h2>UPLOAD BERHASIL!</h2>
               <p>
-                Karya lomba <strong>{cabang}</strong> berhasil diupload.
-                Terima kasih telah berpartisipasi!
+                Karya lomba <strong>{participantData?.cabang}</strong> atas nama <strong>{participantData?.nama}</strong> berhasil diunggah dan tersimpan.
+              </p>
+              <p className="upload-success-note">
+                Terima kasih telah berpartisipasi di IT Days 2026. Pantau informasi selanjutnya di grup WhatsApp!
               </p>
               <Link to="/" className="upload-home-link">KEMBALI KE BERANDA</Link>
             </div>
           </div>
         )}
 
-        {/* Upload Form */}
-        {status === 'allowed' && (
+        {/* Step 2: Form Upload Karya */}
+        {status === 'allowed' && participantData && (
           <div className="upload-panel glass-panel">
             <div className="upload-info-badge">
-              {cabang.toUpperCase()} — {email}
+              <span className="badge-cabang">{participantData.cabang.toUpperCase()}</span>
+              <span className="badge-user">{participantData.nama} ({participantData.email})</span>
             </div>
 
-            <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+            <form onSubmit={handleSubmitKarya} autoComplete="off" noValidate>
               <div className="form-grid">
                 {uploadFields.map((f) => (
                   <div className="field-group" key={f.name}>
@@ -207,7 +281,7 @@ export default function UploadSection() {
                   className="upload-btn"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'MENGIRIM...' : 'UPLOAD KARYA'}
+                  {isSubmitting ? 'MENGIRIM KARYA...' : 'KIRIM KARYA LOMBA'}
                 </button>
               </div>
             </form>

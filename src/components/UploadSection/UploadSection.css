@@ -253,6 +253,66 @@
   margin-bottom: 1.5rem;
 }
 
+/* Step 1 Verification Titles */
+.upload-step-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-bright-yellow);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.upload-step-desc {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-gray);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.upload-error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.upload-retry-btn {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0.7rem 1.8rem;
+  background: var(--color-bright-yellow);
+  color: var(--color-navy);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.upload-retry-btn:hover {
+  background: var(--color-fresh-green);
+  color: var(--color-white);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+}
+
+.badge-cabang {
+  font-weight: 700;
+  color: var(--color-bright-yellow);
+}
+
+.badge-user {
+  opacity: 0.85;
+}
+
+.upload-success-note {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: -0.5rem;
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 640px) {
   .upload-section {
@@ -270,4 +330,16 @@
   .upload-btn {
     width: 100%;
   }
+
+  .upload-error-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .upload-retry-btn,
+  .upload-home-link {
+    width: 100%;
+    text-align: center;
+  }
 }
+
