@@ -2,99 +2,141 @@
 /**
  * Vercel Serverless Function — /api/submit-registration
  *
- * 1. Verifikasi reCAPTCHA v3 token ke Google API
- * 2. Validasi field formulir pendaftaran
- * 3. Forward data ke Google Apps Script backend
+ * Tugasnya HANYA verifikasi keamanan (tidak forward payload ke Google):
+ * 1. Cek honeypot field
+ * 2. Rate limiting per IP
+ * 3. Verifikasi token reCAPTCHA v3 ke Google API
+ *
+ * Jika semua lolos → return { ok: true }
+ * Client kemudian submit payload (dengan file) langsung ke Google Apps Script.
+ *
+ * Alasan arsitektur ini:
+ * File base64 bisa mencapai ~13MB (dua file 5MB), melebihi limit Vercel Free (4.5MB).
+ * Dengan memisahkan verifikasi dan pengiriman data, kita menghindari 413 error.
  */
 
-export default async function handler(req, res) {
-  // CORS Headers
-  const origin = req.headers['origin'] || '';
-  const allowedOrigins = ['https://itdays-usd.com', 'https://www.itdays-usd.com'];
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.itdays-usd.com');
+const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+const MIN_RECAPTCHA_SCORE = 0.5;
+
+// ─── In-memory rate limiter ────────────────────────────────────────────────────
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 5;
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const record = rateLimitStore.get(ip);
+  if (!record) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
   }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  if (now > record.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
   }
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) return true;
+  record.count++;
+  return false;
+}
 
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method tidak diizinkan.' });
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateLimitStore.entries()) {
+    if (now > val.resetAt) rateLimitStore.delete(key);
   }
+}, 10 * 60 * 1000);
 
-  const { recaptchaToken, honeypot, ...formData } = req.body || {};
-
-  // Honeypot check
-  if (honeypot) {
-    console.warn('[SECURITY] Honeypot field filled.');
-    return res.status(200).json({ success: true, message: 'Pendaftaran berhasil.' });
+// ─── Verifikasi reCAPTCHA token ────────────────────────────────────────────────
+async function verifyRecaptcha(token) {
+  if (!RECAPTCHA_SECRET_KEY) {
+    console.error('[SECURITY] RECAPTCHA_SECRET_KEY tidak dikonfigurasi di Vercel env.');
+    return { success: false, score: 0, error: 'misconfigured' };
   }
-
-  // Verify reCAPTCHA token present
-  if (!recaptchaToken) {
-    return res.status(400).json({ error: 'Token keamanan tidak ditemukan.' });
-  }
-
-  const secret = process.env.RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET_KEY;
-  if (!secret) {
-    console.error('[SECURITY] Secret key reCAPTCHA tidak terkonfigurasi di Vercel env.');
-    return res.status(500).json({ error: 'Konfigurasi server belum lengkap.' });
-  }
-
-  // Verify token via Google API
+  const params = new URLSearchParams({ secret: RECAPTCHA_SECRET_KEY, response: token });
   try {
-    const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        secret,
-        response: recaptchaToken,
-      }),
-    });
-
-    const recaptchaData = await recaptchaRes.json();
-    if (!recaptchaData.success || (recaptchaData.score !== undefined && recaptchaData.score < 0.5)) {
-      console.warn('[RECAPTCHA] Verification failed:', recaptchaData);
-      return res.status(403).json({ error: 'Verifikasi keamanan gagal. Refresh halaman dan coba lagi.' });
-    }
-
-    // Validate required fields if present in body
-    const errors = [];
-    if (formData.nama !== undefined && !formData.nama?.trim()) errors.push('Nama wajib diisi.');
-    if (formData.email !== undefined && !formData.email?.includes('@')) errors.push('Email tidak valid.');
-    if (formData.whatsapp !== undefined && !formData.whatsapp?.trim() && !formData.no_hp?.trim()) errors.push('Nomor WhatsApp wajib diisi.');
-    if (formData.instansi !== undefined && !formData.instansi?.trim()) errors.push('Instansi wajib diisi.');
-
-    if (errors.length > 0) {
-      return res.status(400).json({ error: errors.join(' ') });
-    }
-
-    // Forward to Google Apps Script
-    const gasUrl = process.env.GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxz_I6PqOLzWRvrK-1ECATsDpI8DcyuKu_sbBO8kpMIm_6WndDGNGuMYPTAvy0HdwM/exec';
-
-    const payload = new URLSearchParams();
-    payload.append('payload', JSON.stringify({
-      ...formData,
-      recaptchaToken,
-      action: 'registration',
-      recaptcha_score: recaptchaData.score ?? 0.9,
-    }));
-
-    const gasRes = await fetch(gasUrl, {
-      method: 'POST',
-      body: payload,
-    });
-
-    const gasData = await gasRes.json();
-    return res.status(gasData._status || 200).json(gasData);
+    const res = await fetch(`${RECAPTCHA_VERIFY_URL}?${params.toString()}`, { method: 'POST' });
+    const data = await res.json();
+    return {
+      success: data.success,
+      score: data.score ?? 0,
+      action: data.action,
+      errorCodes: data['error-codes'],
+    };
   } catch (err) {
-    console.error('Submit registration error:', err);
-    return res.status(502).json({ error: 'Gagal menghubungi server backend.' });
+    console.error('[SECURITY] Gagal menghubungi reCAPTCHA API:', err);
+    return { success: false, score: 0, error: 'network_error' };
+  }
+}
+
+// ─── Main Handler ──────────────────────────────────────────────────────────────
+export default async function handler(req, res) {
+  try {
+    // CORS — hanya izinkan origin yang dikenal
+    const allowedOrigins = [
+      'https://itdays-usd.com',
+      'https://www.itdays-usd.com',
+      /^https:\/\/itdays.*\.vercel\.app$/,
+    ];
+    const origin = req.headers['origin'] || '';
+    const isAllowed = allowedOrigins.some((o) =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    if (isAllowed) res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method tidak diizinkan.' });
+
+    // ── Rate limiting ──
+    const clientIp =
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      req.headers['x-real-ip'] ||
+      req.socket?.remoteAddress ||
+      'unknown';
+
+    if (isRateLimited(clientIp)) {
+      console.warn(`[RATE LIMIT] IP ${clientIp} melebihi batas.`);
+      return res.status(429).json({ error: 'Terlalu banyak percobaan. Silakan tunggu beberapa menit.' });
+    }
+
+    // ── Parse body ──
+    const body = req.body;
+    if (!body || typeof body !== 'object') {
+      console.error('[HANDLER] Body tidak valid atau bukan object:', typeof body);
+      return res.status(400).json({ error: 'Request body tidak valid.' });
+    }
+
+    const { recaptchaToken, honeypot } = body;
+
+    // ── Honeypot check ──
+    if (honeypot) {
+      console.warn(`[BOT DETECTED] Honeypot terisi dari IP ${clientIp}.`);
+      return res.status(200).json({ ok: true }); // Palsu, biar bot tidak tahu
+    }
+
+    // ── Validasi token ada ──
+    if (!recaptchaToken || typeof recaptchaToken !== 'string' || recaptchaToken.length < 10) {
+      console.warn(`[SECURITY] Token tidak valid dari IP ${clientIp}. Token: ${String(recaptchaToken).slice(0, 20)}...`);
+      return res.status(400).json({ error: 'Token keamanan tidak ditemukan atau tidak valid.' });
+    }
+
+    // ── Verifikasi reCAPTCHA v3 ──
+    const captchaResult = await verifyRecaptcha(recaptchaToken);
+    console.info(`[RECAPTCHA] IP ${clientIp} — success: ${captchaResult.success}, score: ${captchaResult.score}, errors: ${JSON.stringify(captchaResult.errorCodes)}`);
+
+    if (!captchaResult.success || captchaResult.score < MIN_RECAPTCHA_SCORE) {
+      return res.status(403).json({
+        error: 'Verifikasi keamanan gagal. Silakan refresh halaman dan coba lagi.',
+      });
+    }
+
+    // ── Semua lolos → Client boleh lanjut submit ke Google Apps Script ──
+    return res.status(200).json({ ok: true });
+
+  } catch (unexpectedErr) {
+    console.error('[HANDLER] Unexpected error:', unexpectedErr?.message, unexpectedErr?.stack);
+    return res.status(500).json({ error: 'Terjadi kesalahan server. Silakan coba lagi.' });
   }
 }
