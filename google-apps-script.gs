@@ -1,10 +1,11 @@
 // ================================================================
-//  IT DAYS — Google Apps Script (v3.2 - Fully Synchronized & Installed Trigger)
+//  IT DAYS 2026 — Google Apps Script Backend (v5.0 - Combined Full Features & Strict Security)
+//  - Fully Secured: reCAPTCHA v3 Server-Side Verification + Rate Limiting + Field Validation
 //  - Multi-sheet synchronization (Data Peserta <-> Cabang Lomba)
 //  - Header-based Cell Mapping (Aman meskipun urutan kolom di sheet berubah)
-//  - Verifikasi Admin ("Terdaftar", "Terbayar", "Terverifikasi", "Lunas")
-//  - Verifikasi Email langsung di /upload (tanpa query params URL)
-//  - Installed Trigger untuk mengatasi permission error GmailApp.sendEmail
+//  - Direct Drive File Upload (KTM & Bukti Pembayaran)
+//  - Instant Email Notification (GmailApp dengan HTML Template + Link WA + Link Upload)
+//  - Eligibility API (doGet) untuk halaman Upload Karya
 // ================================================================
 
 // ----------------------------------------------------------------
@@ -16,7 +17,13 @@ const CONFIG = {
   EVENT_ORGANIZER: "Panitia IT Days 2026",
   PANITIA_EMAIL:   "usditdays@gmail.com",
   REPLY_TO:        "usditdays@gmail.com",
-  WEBSITE_URL:     "https://itdays-usd.com", // Base URL website untuk link /upload
+  WEBSITE_URL:     "https://itdays-usd.com",
+
+  // Dynamic getters for Script Properties
+  recaptchaSecret: () => PropertiesService.getScriptProperties().getProperty('RECAPTCHA_SECRET'),
+  sheetId: () => PropertiesService.getScriptProperties().getProperty('SHEET_ID') || SpreadsheetApp.getActiveSpreadsheet().getId(),
+  maxRequestsPerMin: 10,
+  minRecaptchaScore: 0.5,
 
   WA_LINKS: {
     "Badminton":      "https://chat.whatsapp.com/Kgz5aV5fNMc5cX2IvnZGn4",
@@ -30,7 +37,7 @@ const CONFIG = {
   },
 };
 
-const DRIVE_FOLDER_ID = "";
+const DRIVE_FOLDER_ID = ""; // Opsional: ID Folder Google Drive (kosong = Root Drive)
 
 const COL = {
   TIMESTAMP:    "Timestamp",
@@ -128,13 +135,83 @@ function isStatusVerified(status) {
 }
 
 // ----------------------------------------------------------------
-//  SMART HEADER-BASED WRITER
+//  KEAMANAN & VALIDASI SERVER-SIDE
 // ----------------------------------------------------------------
 
 /**
- * Menulis / meng-update data ke baris sheet berdasarkan NAMA KOLOM HEADER
- * Mencegah data tertukar meskipun urutan kolom di Google Sheet bergeser.
+ * Verification of reCAPTCHA v3 Token
  */
+function verifyRecaptcha(token) {
+  if (!token) {
+    return { success: false, score: 0, error: 'Token missing' };
+  }
+
+  const secret = CONFIG.recaptchaSecret();
+  if (!secret) {
+    console.warn('RECAPTCHA_SECRET not configured in Script Properties');
+    return { success: false, score: 0, error: 'Server secret missing' };
+  }
+
+  try {
+    const response = UrlFetchApp.fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'post',
+      payload: {
+        secret: secret,
+        response: token,
+      },
+      muteHttpExceptions: true,
+    });
+
+    const result = JSON.parse(response.getContentText());
+
+    if (!result.success) {
+      console.warn('reCAPTCHA verify failed:', result['error-codes']);
+      return { success: false, score: 0, errors: result['error-codes'] };
+    }
+
+    if (result.score < CONFIG.minRecaptchaScore) {
+      console.warn('reCAPTCHA score too low:', result.score);
+      return { success: false, score: result.score };
+    }
+
+    return { success: true, score: result.score };
+  } catch (err) {
+    console.error('reCAPTCHA API error:', err);
+    return { success: false, score: 0, error: err.message };
+  }
+}
+
+/**
+ * Rate limiting per IP (script-wide via LockService)
+ */
+function checkRateLimit() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(2000)) return false;
+
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const now = Date.now();
+    const windowMs = 60000;
+    const maxReq = CONFIG.maxRequestsPerMin;
+    const key = 'rate_limit_timestamps';
+
+    const timestamps = JSON.parse(props.getProperty(key) || '[]');
+    const recent = timestamps.filter(ts => now - ts < windowMs);
+
+    if (recent.length >= maxReq) return false;
+
+    recent.push(now);
+    props.setProperty(key, JSON.stringify(recent));
+    return true;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ----------------------------------------------------------------
+//  SMART HEADER-BASED WRITER
+// ----------------------------------------------------------------
+
 function writeRowDataByHeaders(sheet, rowIndex, dataMap) {
   const lastCol = Math.max(sheet.getLastColumn(), 1);
   const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
@@ -176,104 +253,274 @@ function doPost(e) {
     } else if (e.postData && e.postData.contents) {
       data = JSON.parse(e.postData.contents);
     } else {
-      throw new Error("Tidak ada data yang diterima.");
+      return sendJson(400, { error: "Tidak ada data payload yang diterima." });
     }
 
-    let folder = DRIVE_FOLDER_ID ? DriveApp.getFolderById(DRIVE_FOLDER_ID) : DriveApp.getRootFolder();
+    const action = data.action || 'registration';
 
-    function uploadFile(fileData) {
-      if (fileData && typeof fileData === 'object' && fileData.data) {
-        const decodedData = Utilities.base64Decode(fileData.data);
-        const blob = Utilities.newBlob(decodedData, fileData.type, fileData.name);
-        const file = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        return file.getUrl();
-      }
-      return fileData || "";
+    // 1. Rate Limiting Check
+    if (!checkRateLimit()) {
+      return sendJson(429, { error: "Terlalu banyak permintaan. Silakan tunggu beberapa menit." });
     }
 
-    if (data.action === "upload") {
+    // 2. reCAPTCHA Verification
+    const recaptchaResult = verifyRecaptcha(data.recaptchaToken || '');
+    if (!recaptchaResult.success) {
+      return sendJson(403, { error: "Verifikasi keamanan gagal. Refresh halaman dan coba lagi." });
+    }
+
+    // 3. Dispatch action
+    if (action === "upload") {
       return handleUploadKarya(data);
     }
 
-    data[COL.KTM] = uploadFile(data[COL.KTM]);
-    data[COL.BUKTI_BAYAR] = uploadFile(data[COL.BUKTI_BAYAR]);
-
-    const namedValues = {};
-    for (const key in data) {
-      namedValues[key] = [data[key]];
-    }
-
-    onFormSubmit({ namedValues: namedValues });
-
-    return ContentService.createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return handleRegistrationSubmit(data);
 
   } catch (err) {
-    Logger.log("ERROR di doPost: " + err.message);
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+    console.error("doPost error:", err);
+    return sendJson(500, { error: "Terjadi kesalahan server: " + err.message });
   }
 }
 
+/**
+ * Handle Registration Action
+ */
+function handleRegistrationSubmit(data) {
+  const errors = [];
+
+  const nama = data.nama || data[COL.NAMA] || '';
+  const email = data.email || data[COL.EMAIL] || '';
+  const noHp = data.no_hp || data.whatsapp || data[COL.NO_HP] || '';
+  const instansi = data.instansi || data[COL.INSTANSI] || '';
+  const kategori = data.kategori || data[COL.KATEGORI] || '';
+  const cabang = data.cabang || data[COL.CABANG] || '';
+
+  const ktmInput = data.ktm_b64 || data[COL.KTM] || '';
+  const paymentInput = data.payment_b64 || data[COL.BUKTI_BAYAR] || '';
+
+  // Server-side validation rules
+  if (!nama || nama.trim().length < 2) {
+    errors.push('Nama lengkap wajib diisi (min 2 karakter).');
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push('Email tidak valid.');
+  }
+  if (!noHp || noHp.trim().length < 8) {
+    errors.push('Nomor WhatsApp tidak valid (min 8 digit).');
+  }
+  if (!instansi || instansi.trim().length < 2) {
+    errors.push('Asal instansi wajib diisi.');
+  }
+  if (!kategori) {
+    errors.push('Kategori lomba wajib dipilih.');
+  }
+  if (!cabang) {
+    errors.push('Cabang lomba wajib dipilih.');
+  }
+
+  // Duplicate email check
+  if (email && isEmailRegistered(email)) {
+    errors.push('Email ini sudah terdaftar di lomba IT Days.');
+  }
+
+  if (errors.length > 0) {
+    return sendJson(400, { error: errors.join(' ') });
+  }
+
+  // File processing (Drive upload)
+  let folder = DRIVE_FOLDER_ID ? DriveApp.getFolderById(DRIVE_FOLDER_ID) : DriveApp.getRootFolder();
+
+  function uploadFile(fileData, filePrefix) {
+    if (fileData && typeof fileData === 'object' && fileData.data) {
+      const decodedData = Utilities.base64Decode(fileData.data);
+      const blob = Utilities.newBlob(decodedData, fileData.type || 'image/jpeg', `${filePrefix}_${nama}_${Date.now()}`);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return file.getUrl();
+    }
+    if (typeof fileData === 'string' && fileData.startsWith('data:')) {
+      const parts = fileData.split(',');
+      const meta = parts[0];
+      const base64Str = parts[1];
+      const mime = meta.split(':')[1].split(';')[0];
+      const decodedData = Utilities.base64Decode(base64Str);
+      const blob = Utilities.newBlob(decodedData, mime, `${filePrefix}_${nama}_${Date.now()}`);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return file.getUrl();
+    }
+    return fileData || "";
+  }
+
+  data[COL.KTM] = uploadFile(ktmInput, 'KTM');
+  data[COL.BUKTI_BAYAR] = uploadFile(paymentInput, 'Bayar');
+
+  const namedValues = {};
+  for (const key in data) {
+    namedValues[key] = [data[key]];
+  }
+
+  onFormSubmit({ namedValues: namedValues });
+
+  return sendJson(200, { success: true, message: "Pendaftaran berhasil disimpan." });
+}
+
+/**
+ * Handle Upload Action (Upload Karya)
+ */
+function handleUploadKarya(data) {
+  const errors = [];
+  const email = (data.email || '').trim();
+  const cabang = (data.cabang || '').trim();
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.push('Email tidak valid.');
+  }
+  if (!cabang) {
+    errors.push('Cabang lomba tidak ditemukan.');
+  }
+
+  const figmaLink = data.figma_link || data['Link Figma Project'] || data['Link Figma'] || '';
+  const githubLink = data.github_link || data['Link Repository GitHub'] || data['Link GitHub'] || '';
+  const posterLink = data.poster_drive_link || data.poster_link || data['Link Google Drive (Hasil Poster)'] || data['Link Drive Poster'] || '';
+
+  if (cabang === 'UI/UX' && (!figmaLink || !figmaLink.startsWith('https://figma.com/'))) {
+    errors.push('Link Figma tidak valid.');
+  }
+  if (cabang === 'Web Dev' && (!githubLink || !githubLink.startsWith('https://github.com/'))) {
+    errors.push('Link GitHub tidak valid.');
+  }
+  if (cabang === 'Poster' && (!posterLink || !posterLink.startsWith('https://drive.google.com/'))) {
+    errors.push('Link Google Drive tidak valid.');
+  }
+
+  if (errors.length > 0) {
+    return sendJson(400, { error: errors.join(' ') });
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId());
+
+  // Update in Rekap
+  const rekapSheet = ss.getSheetByName("Data Peserta");
+  let updatedInRekap = false;
+  if (rekapSheet && rekapSheet.getLastRow() > 1) {
+    const rHeaders = rekapSheet.getRange(1, 1, 1, rekapSheet.getLastColumn()).getValues()[0];
+    const emailIdx = rHeaders.indexOf("Email");
+    if (emailIdx >= 0) {
+      const rData = rekapSheet.getRange(2, 1, rekapSheet.getLastRow() - 1, rekapSheet.getLastColumn()).getValues();
+      for (let i = 0; i < rData.length; i++) {
+        if ((rData[i][emailIdx] || '').toString().trim().toLowerCase() === email.toLowerCase()) {
+          const r = i + 2;
+          const map = { "Status Upload": "SUDAH" };
+          if (figmaLink) map["Link Figma"] = figmaLink;
+          if (githubLink) map["Link GitHub"] = githubLink;
+          if (posterLink) map["Link Drive Poster"] = posterLink;
+          writeRowDataByHeaders(rekapSheet, r, map);
+          updatedInRekap = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // Update in Branch Sheet
+  const cfg = LOMBA_SHEETS[cabang];
+  if (cfg) {
+    const cSheet = ss.getSheetByName(cfg.sheetName);
+    if (cSheet && cSheet.getLastRow() > 1) {
+      const cHeaders = cSheet.getRange(1, 1, 1, cSheet.getLastColumn()).getValues()[0];
+      const cEmailIdx = cHeaders.indexOf("Email");
+      if (cEmailIdx >= 0) {
+        const cData = cSheet.getRange(2, 1, cSheet.getLastRow() - 1, cSheet.getLastColumn()).getValues();
+        for (let j = 0; j < cData.length; j++) {
+          if ((cData[j][cEmailIdx] || '').toString().trim().toLowerCase() === email.toLowerCase()) {
+            const r = j + 2;
+            const map = { "Status Upload": "SUDAH" };
+            if (figmaLink) map["Link Figma"] = figmaLink;
+            if (githubLink) map["Link GitHub"] = githubLink;
+            if (posterLink) map["Link Drive Poster"] = posterLink;
+            writeRowDataByHeaders(cSheet, r, map);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return sendJson(200, { success: true, message: "Karya berhasil diunggah." });
+}
+
 // ----------------------------------------------------------------
-//  REGISTRASI FORM SUBMIT
+//  REGISTRASI FORM SUBMIT & MULTI-SHEET SYNC
 // ----------------------------------------------------------------
 
 function onFormSubmit(e) {
   try {
     const d = extractFormData(e.namedValues);
+    const ss = SpreadsheetApp.openById(CONFIG.sheetId());
 
     const cfg = LOMBA_SHEETS[d.cabang];
     let lombaRow = "-";
     if (cfg) {
-      const lombaSheet = getOrCreateLombaSheet(cfg);
+      const lombaSheet = getOrCreateLombaSheet(ss, cfg);
       lombaRow = appendToLombaSheet(lombaSheet, cfg, d);
     }
 
-    const rekapSheet = getOrCreateSheet("Data Peserta", REKAP_HEADERS);
+    const rekapSheet = getOrCreateSheet(ss, "Data Peserta", REKAP_HEADERS);
     appendToRekap(rekapSheet, d);
 
-    const emailResult = { success: true, reason: "Menunggu verifikasi admin" };
-    const logSheet = getOrCreateSheet("Log Email", LOG_HEADERS);
+    // Instant Email Dispatch
+    const waLink = CONFIG.WA_LINKS[d.cabang] || null;
+    const hasUpload = cfg && cfg.uploadCols && cfg.uploadCols.length > 0;
+    const baseUrl = CONFIG.WEBSITE_URL || "https://itdays-usd.com";
+    const uploadLink = hasUpload
+      ? baseUrl.replace(/\/+$/, "") + "/upload?email=" + encodeURIComponent(d.email) + "&cabang=" + encodeURIComponent(d.cabang)
+      : null;
+
+    const emailResult = sendVerifikasiEmail(d, waLink, uploadLink);
+    const emailStatusText = emailResult.success ? "Terkirim" : "Gagal: " + emailResult.reason;
+
+    syncRowStatus(ss, d.email, "Terdaftar", emailStatusText);
+
+    const logSheet = getOrCreateSheet(ss, "Log Email", LOG_HEADERS);
     appendLog(logSheet, d, lombaRow, emailResult);
 
   } catch (err) {
-    Logger.log("ERROR onFormSubmit: " + err.message);
+    console.error("ERROR onFormSubmit:", err);
   }
 }
 
 function extractFormData(responses) {
   function get(key) {
     const val = responses[key];
-    return val ? val[0].trim() : "";
+    return val ? val[0].toString().trim() : "";
   }
   return {
     timestamp:   get(COL.TIMESTAMP) || new Date().toLocaleString("id-ID"),
-    nama:        get(COL.NAMA),
-    email:       get(COL.EMAIL),
-    noHp:        get(COL.NO_HP),
-    instansi:    get(COL.INSTANSI),
-    kategori:    get(COL.KATEGORI),
-    cabang:      get(COL.CABANG),
-    namaTim:     get(COL.NAMA_TIM),
-    anggota:     get(COL.ANGGOTA),
-    idGame:      get(COL.ID_GAME),
-    nickname:    get(COL.NICKNAME),
-    official1:   get(COL.OFFICIAL_1),
-    official2:   get(COL.OFFICIAL_2),
-    figmaLink:   get(COL.FIGMA_LINK),
-    githubLink:  get(COL.GITHUB_LINK),
+    nama:        get(COL.NAMA) || get("nama"),
+    email:       get(COL.EMAIL) || get("email"),
+    noHp:        get(COL.NO_HP) || get("whatsapp") || get("no_hp"),
+    instansi:    get(COL.INSTANSI) || get("instansi"),
+    kategori:    get(COL.KATEGORI) || get("kategori"),
+    cabang:      get(COL.CABANG) || get("cabang"),
+    namaTim:     get(COL.NAMA_TIM) || get("nama_tim"),
+    anggota:     get(COL.ANGGOTA) || get("anggota"),
+    idGame:      get(COL.ID_GAME) || get("id_game"),
+    nickname:    get(COL.NICKNAME) || get("nickname"),
+    official1:   get(COL.OFFICIAL_1) || get("official_1"),
+    official2:   get(COL.OFFICIAL_2) || get("official_2"),
+    figmaLink:   get(COL.FIGMA_LINK) || get("figma_link"),
+    githubLink:  get(COL.GITHUB_LINK) || get("github_link"),
     drivePpt:    get(COL.DRIVE_PPT),
-    drivePoster: get(COL.DRIVE_POSTER),
-    ktm:         get(COL.KTM),
-    buktiByar:   get(COL.BUKTI_BAYAR),
+    drivePoster: get(COL.DRIVE_POSTER) || get("poster_drive_link"),
+    ktm:         get(COL.KTM) || get("ktm_b64"),
+    buktiByar:   get(COL.BUKTI_BAYAR) || get("payment_b64"),
   };
 }
 
-function getOrCreateLombaSheet(cfg) {
+function getOrCreateLombaSheet(ss, cfg) {
   const headers = [...BASE_COLS, ...cfg.extraCols, ...(cfg.uploadCols || []), ...END_COLS];
-  return getOrCreateSheet(cfg.sheetName, headers);
+  return getOrCreateSheet(ss, cfg.sheetName, headers);
 }
 
 function appendToLombaSheet(sheet, cfg, d) {
@@ -291,7 +538,7 @@ function appendToLombaSheet(sheet, cfg, d) {
     ...cfg.fillExtra(d),
     "KTM": d.ktm,
     "Bukti Bayar": d.buktiByar,
-    "Status": "Menunggu Verifikasi",
+    "Status": "Terdaftar",
     "Email Terkirim": "Menunggu",
     "Status Upload": hasUpload ? "BELUM" : "-",
   };
@@ -331,7 +578,7 @@ function appendToRekap(sheet, d) {
     "Link Drive Poster": d.drivePoster,
     "KTM": d.ktm,
     "Bukti Bayar": d.buktiByar,
-    "Status": "Menunggu Verifikasi",
+    "Status": "Terdaftar",
     "Email Terkirim": "Menunggu",
     "Status Upload": hasUpload ? "BELUM" : "-",
   };
@@ -364,102 +611,23 @@ function syncRowStatus(ss, email, newStatus, newEmailStatus) {
   });
 }
 
-// ----------------------------------------------------------------
-//  TRIGGER INSTALLED ON EDIT (MENANGANI GMAIL PERMISSIONS)
-// ----------------------------------------------------------------
-
-/**
- * Trigger terpasang yang memiliki izin penuh untuk menjalankan GmailApp.sendEmail
- */
-function installedOnEdit(e) {
-  handleEditEvent(e);
-}
-
-/**
- * Simple Trigger fallback (apabila belum di-install sebagai Installed Trigger)
- */
-function onEdit(e) {
-  handleEditEvent(e);
-}
-
-function handleEditEvent(e) {
+function isEmailRegistered(email) {
   try {
-    if (!e || !e.source || !e.range) return;
-    const sheet = e.source.getActiveSheet();
-    const range = e.range;
+    const ss = SpreadsheetApp.openById(CONFIG.sheetId());
+    const sheet = ss.getSheetByName("Data Peserta") || ss.getActiveSheet();
+    if (sheet.getLastRow() <= 1) return false;
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const statusColIdx = headers.indexOf("Status");
-
-    if (statusColIdx < 0 || range.getColumn() !== statusColIdx + 1) return;
-
-    const newStatusValue = range.getValue();
-    if (!isStatusVerified(newStatusValue)) return;
-
-    const row = range.getRow();
-    if (row <= 1) return;
-
-    const emailSentColIdx = headers.indexOf("Email Terkirim");
-    if (emailSentColIdx >= 0 && sheet.getRange(row, emailSentColIdx + 1).getValue() === "Terkirim") {
-      return; // Sudah pernah terkirim
-    }
-
-    const values = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const email = (values[headers.indexOf("Email")] || "").toString().trim();
-    const nama = (values[headers.indexOf("Nama")] || "").toString().trim();
-
-    let cabang = sheet.getName();
-    const cabangColIdx = headers.indexOf("Cabang");
-    if (cabangColIdx >= 0 && values[cabangColIdx]) {
-      cabang = values[cabangColIdx].toString().trim();
-    }
-
-    if (!email || !cabang) return;
-
-    const cfg = LOMBA_SHEETS[cabang];
-    const hasUpload = cfg && cfg.uploadCols && cfg.uploadCols.length > 0;
-    const waLink = CONFIG.WA_LINKS[cabang] || null;
-
-    const baseUrl = CONFIG.WEBSITE_URL || "https://itdays-usd.com";
-    const uploadLink = hasUpload
-      ? baseUrl.replace(/\/+$/, "") + "/upload"
-      : null;
-
-    const result = sendVerifikasiEmail({ nama: nama, email: email, cabang: cabang }, waLink, uploadLink);
-    const emailStatusText = result.success ? "Terkirim" : "Gagal: " + result.reason;
-
-    syncRowStatus(e.source, email, newStatusValue, emailStatusText);
-
-    const logSheet = getOrCreateSheet("Log Email", LOG_HEADERS);
-    appendLog(logSheet, { nama: nama, email: email, cabang: cabang }, row, result);
-
-  } catch (err) {
-    Logger.log("ERROR handleEditEvent: " + err.message);
+    const emailIdx = headers.indexOf("Email");
+    if (emailIdx < 0) return false;
+    const emails = sheet.getRange(2, emailIdx + 1, sheet.getLastRow() - 1, 1).getValues().flat();
+    return emails.some(e => e.toString().toLowerCase() === email.toLowerCase());
+  } catch (e) {
+    return false;
   }
 }
 
-function installOnEditTrigger() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(t => {
-    if (t.getHandlerFunction() === "installedOnEdit") {
-      ScriptApp.deleteTrigger(t);
-    }
-  });
-
-  ScriptApp.newTrigger("installedOnEdit")
-    .forSpreadsheet(ss)
-    .onEdit()
-    .create();
-
-  SpreadsheetApp.getUi().alert(
-    "✅ Trigger Email Otomatis Berhasil Dipasang!\n\n" +
-    "Sekarang setiap kali Admin mengubah kolom 'Status' menjadi 'Terdaftar' / 'Terbayar', " +
-    "email verifikasi akan dikirimkan secara otomatis tanpa masalah perizinan (permissions)."
-  );
-}
-
 // ----------------------------------------------------------------
-//  EMAIL TEMPLATES
+//  EMAIL SERVICE
 // ----------------------------------------------------------------
 
 function sendVerifikasiEmail(d, waLink, uploadLink) {
@@ -525,7 +693,7 @@ function buildVerifikasiHtmlEmail(d, waLink, uploadLink) {
 }
 
 function buildVerifikasiPlainEmail(d, waLink, uploadLink) {
-  var t = "Halo " + d.nama + ",\n\n";
+  let t = "Halo " + d.nama + ",\n\n";
   t += "Pendaftaran untuk lomba " + d.cabang + " di " + CONFIG.EVENT_NAME + " telah berhasil dikonfirmasi oleh panitia.\n\n";
   if (waLink) t += "Link Grup WhatsApp " + d.cabang + ":\n" + waLink + "\n\n";
   if (uploadLink) t += "Halaman Upload Karya:\n" + uploadLink + "\nGunakan email: " + d.email + "\n\n";
@@ -534,26 +702,20 @@ function buildVerifikasiPlainEmail(d, waLink, uploadLink) {
 }
 
 // ----------------------------------------------------------------
-//  API CEK VERIFIKASI EMAIL (doGet)
+//  API CEK KELAYAKAN EMAIL (doGet)
 // ----------------------------------------------------------------
 
-/**
- * doGet mendukung:
- * 1. Pengecekan via email saja (pilihan baru) -> mencari peserta di seluruh sheet/rekap.
- * 2. Pengecekan via email & cabang.
- */
 function doGet(e) {
   try {
-    var email = (e.parameter.email || "").trim().toLowerCase();
-    var cabangParam = (e.parameter.cabang || "").trim();
+    const email = (e.parameter.email || "").trim().toLowerCase();
+    const cabangParam = (e.parameter.cabang || "").trim();
 
     if (!email) {
       return jsonResponse({ allowed: false, reason: "Masukkan alamat email Anda yang terdaftar." });
     }
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = SpreadsheetApp.openById(CONFIG.sheetId());
 
-    // 1. Cari data di Data Peserta (Rekap) terlebih dahulu
     var rekapSheet = ss.getSheetByName("Data Peserta");
     var foundRow = null;
 
@@ -571,7 +733,6 @@ function doGet(e) {
           var rowEmail = (rData[i][emailIdx] || "").toString().trim().toLowerCase();
           var rowCabang = cabangIdx >= 0 ? (rData[i][cabangIdx] || "").toString().trim() : "";
 
-          // Jika cabangParam diisi, cocokkan cabang juga. Jika tidak, ambil baris pertama email match.
           if (rowEmail === email && (!cabangParam || rowCabang.toLowerCase() === cabangParam.toLowerCase())) {
             var status = statusIdx >= 0 ? (rData[i][statusIdx] || "").toString().trim() : "";
             var uploadStatus = uploadStatusIdx >= 0 ? (rData[i][uploadStatusIdx] || "").toString().trim() : "";
@@ -590,7 +751,6 @@ function doGet(e) {
       }
     }
 
-    // Jika tidak ada di rekap, cari di sheet-sheet cabang secara langsung
     if (!foundRow) {
       for (var bName in LOMBA_SHEETS) {
         if (cabangParam && bName.toLowerCase() !== cabangParam.toLowerCase()) continue;
@@ -632,10 +792,6 @@ function doGet(e) {
       return jsonResponse({ allowed: false, reason: "Cabang lomba '" + foundRow.cabang + "' tidak memerlukan upload karya." });
     }
 
-    if (!isStatusVerified(foundRow.status)) {
-      return jsonResponse({ allowed: false, reason: "Pendaftaran atas email ini belum terverifikasi admin. Status saat ini: '" + (foundRow.status || "Menunggu Verifikasi") + "'." });
-    }
-
     if (foundRow.uploadStatus === "SUDAH") {
       return jsonResponse({ allowed: false, reason: "Anda sudah berhasil melakukan upload karya untuk cabang " + foundRow.cabang + "." });
     }
@@ -653,205 +809,78 @@ function doGet(e) {
   }
 }
 
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
+// ----------------------------------------------------------------
+//  HELPER & UTILITIES
+// ----------------------------------------------------------------
+
+function sendJson(code, data) {
+  data._status = code;
+  return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ----------------------------------------------------------------
-//  HANDLE UPLOAD KARYA (doPost action=upload)
-// ----------------------------------------------------------------
-
-function handleUploadKarya(data) {
-  var email = (data.email || "").trim().toLowerCase();
-  var cabang = (data.cabang || "").trim();
-
-  if (!email) {
-    return jsonResponse({ success: false, error: "Parameter email wajib diisi." });
-  }
-
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var targetCabang = cabang;
-
-  // Jika cabang tidak dikirim oleh frontend, cari cabang peserta berdasarkan email di Data Peserta
-  if (!targetCabang) {
-    var rekapSheet = ss.getSheetByName("Data Peserta");
-    if (rekapSheet && rekapSheet.getLastRow() > 1) {
-      var rHeaders = rekapSheet.getRange(1, 1, 1, rekapSheet.getLastColumn()).getValues()[0];
-      var rEmailIdx = rHeaders.indexOf("Email");
-      var rCabangIdx = rHeaders.indexOf("Cabang");
-      if (rEmailIdx >= 0 && rCabangIdx >= 0) {
-        var rData = rekapSheet.getRange(2, 1, rekapSheet.getLastRow() - 1, rekapSheet.getLastColumn()).getValues();
-        for (var i = 0; i < rData.length; i++) {
-          if ((rData[i][rEmailIdx] || "").toString().trim().toLowerCase() === email) {
-            targetCabang = (rData[i][rCabangIdx] || "").toString().trim();
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  var cfg = LOMBA_SHEETS[targetCabang];
-  if (!cfg || !cfg.uploadCols || cfg.uploadCols.length === 0) {
-    return jsonResponse({ success: false, error: "Cabang lomba tidak ditemukan atau tidak memerlukan upload." });
-  }
-
-  var cSheet = ss.getSheetByName(cfg.sheetName);
-  if (!cSheet || cSheet.getLastRow() <= 1) {
-    return jsonResponse({ success: false, error: "Data cabang tidak ditemukan." });
-  }
-
-  var cHeaders = cSheet.getRange(1, 1, 1, cSheet.getLastColumn()).getValues()[0];
-  var cEmailIdx = cHeaders.indexOf("Email");
-  var cStatusIdx = cHeaders.indexOf("Status");
-  var cUploadStatusIdx = cHeaders.indexOf("Status Upload");
-
-  var targetRow = -1;
-  var cData = cSheet.getRange(2, 1, cSheet.getLastRow() - 1, cSheet.getLastColumn()).getValues();
-
-  for (var k = 0; k < cData.length; k++) {
-    if ((cData[k][cEmailIdx] || "").toString().trim().toLowerCase() === email) {
-      var st = cStatusIdx >= 0 ? (cData[k][cStatusIdx] || "").toString().trim() : "";
-      var upSt = cUploadStatusIdx >= 0 ? (cData[k][cUploadStatusIdx] || "").toString().trim() : "";
-
-      if (!isStatusVerified(st)) {
-        return jsonResponse({ success: false, error: "Pendaftaran belum dikonfirmasi." });
-      }
-      if (upSt === "SUDAH") {
-        return jsonResponse({ success: false, error: "Karya sudah pernah diupload sebelumnya." });
-      }
-      targetRow = k + 2;
-      break;
-    }
-  }
-
-  if (targetRow < 0) {
-    return jsonResponse({ success: false, error: "Peserta tidak ditemukan di cabang " + targetCabang + "." });
-  }
-
-  var colMapping = {
-    "Link Figma": "figma_link",
-    "Link GitHub": "github_link",
-    "Link Drive PPT": "presentation_drive_link",
-    "Link Drive Poster": "poster_drive_link",
-  };
-
-  var updateMap = {
-    "Status Upload": "SUDAH"
-  };
-
-  for (var c = 0; c < cfg.uploadCols.length; c++) {
-    var cName = cfg.uploadCols[c];
-    var propName = colMapping[cName] || cName;
-    var val = (data[propName] || data[cName] || "").toString().trim();
-    updateMap[cName] = val;
-  }
-
-  // Update Sheet Cabang
-  writeRowDataByHeaders(cSheet, targetRow, updateMap);
-
-  // Update Sheet Data Peserta (Rekap)
-  var rSheet = ss.getSheetByName("Data Peserta");
-  if (rSheet && rSheet.getLastRow() > 1) {
-    var rHeaders = rSheet.getRange(1, 1, 1, rSheet.getLastColumn()).getValues()[0];
-    var rEmailIdx = rHeaders.indexOf("Email");
-    if (rEmailIdx >= 0) {
-      var rData = rSheet.getRange(2, 1, rSheet.getLastRow() - 1, rSheet.getLastColumn()).getValues();
-      for (var r = 0; r < rData.length; r++) {
-        if ((rData[r][rEmailIdx] || "").toString().trim().toLowerCase() === email) {
-          writeRowDataByHeaders(rSheet, r + 2, updateMap);
-          break;
-        }
-      }
-    }
-  }
-
-  return jsonResponse({ success: true });
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-function appendLog(logSheet, d, lombaRow, emailResult) {
-  logSheet.appendRow([
-    new Date().toLocaleString("id-ID"),
-    d.nama || "-", d.email || "-", d.cabang || "-", lombaRow || "-",
-    emailResult.success ? "Berhasil" : "Gagal",
-    emailResult.reason || "-",
-  ]);
-}
-
-function getOrCreateSheet(name, headers) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(name);
-
+function getOrCreateSheet(ss, sheetName, headers) {
+  let sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    sheet = ss.insertSheet(name);
-  }
-
-  // Jika header kosong atau belum ada
-  if (sheet.getLastRow() === 0) {
-    const range = sheet.getRange(1, 1, 1, headers.length);
-    range.setValues([headers]);
-    range.setBackground("#1a1a2e");
-    range.setFontColor("#ffffff");
-    range.setFontWeight("bold");
-    range.setFontSize(11);
+    sheet = ss.insertSheet(sheetName);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    formatHeaderRow(sheet, headers.length);
     sheet.setFrozenRows(1);
-    sheet.setRowHeight(1, 36);
-    headers.forEach((_, i) => sheet.setColumnWidth(i + 1, 160));
-  } else {
-    // Pastikan baris 1 header diperbarui jika ada kolom baru
-    const currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
-    headers.forEach(h => {
-      if (currentHeaders.indexOf(h) < 0) {
-        const newColIdx = currentHeaders.length + 1;
-        sheet.getRange(1, newColIdx).setValue(h);
-        sheet.getRange(1, newColIdx).setBackground("#1a1a2e").setFontColor("#ffffff").setFontWeight("bold");
-        currentHeaders.push(h);
-      }
-    });
   }
-
   return sheet;
 }
 
-function formatDataRow(sheet, row, totalCols) {
-  sheet.getRange(row, 1, 1, Math.max(totalCols, 1)).setVerticalAlignment("middle");
+function formatHeaderRow(sheet, colCount) {
+  const range = sheet.getRange(1, 1, 1, colCount);
+  range.setBackground("#1a1a2e")
+       .setFontColor("#ffffff")
+       .setFontWeight("bold")
+       .setHorizontalAlignment("center");
+}
+
+function formatDataRow(sheet, row, colCount) {
+  const range = sheet.getRange(row, 1, 1, colCount);
+  range.setFontFamily("Segoe UI");
+  range.setFontSize(10);
   if (row % 2 === 0) {
-    sheet.getRange(row, 1, 1, Math.max(totalCols, 1)).setBackground("#F8F9FA");
+    range.setBackground("#f8fafc");
   }
 }
 
+function appendLog(sheet, d, lombaRow, emailResult) {
+  const nextRow = Math.max(sheet.getLastRow() + 1, 2);
+  sheet.getRange(nextRow, 1, 1, LOG_HEADERS.length).setValues([[
+    new Date().toLocaleString("id-ID"),
+    d.nama,
+    d.email,
+    d.cabang,
+    lombaRow,
+    emailResult.success ? "Terkirim" : "Gagal",
+    emailResult.reason || "-",
+  ]]);
+}
+
 // ----------------------------------------------------------------
-//  SETUP & MENU ADMIN
+//  ADMIN MENU & TRIGGER HELPERS
 // ----------------------------------------------------------------
 
 function setupSemuaSheets() {
-  getOrCreateSheet("Data Peserta", REKAP_HEADERS);
-  getOrCreateSheet("Log Email",    LOG_HEADERS);
-  Object.values(LOMBA_SHEETS).forEach(cfg => getOrCreateLombaSheet(cfg));
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId());
+  getOrCreateSheet(ss, "Data Peserta", REKAP_HEADERS);
+  getOrCreateSheet(ss, "Log Email", LOG_HEADERS);
+  Object.values(LOMBA_SHEETS).forEach(cfg => getOrCreateLombaSheet(ss, cfg));
 
-  // Perbaiki semua baris 1 header agar rapi dan sinkron
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const rekapSheet = ss.getSheetByName("Data Peserta");
-  if (rekapSheet) {
-    const range = rekapSheet.getRange(1, 1, 1, REKAP_HEADERS.length);
-    range.setValues([REKAP_HEADERS]);
-    range.setBackground("#1a1a2e").setFontColor("#ffffff").setFontWeight("bold");
-  }
-
-  SpreadsheetApp.getUi().alert(
-    "✅ Setup & Perapihan Sheet Selesai!\n\n" +
-    "Semua header tabel telah disinkronkan:\n" +
-    "- Data Peserta (Rekap)\n" +
-    "- Log Email\n" +
-    "- Sheet Lomba: Badminton, Futsal, ML, PUBG, UI/UX, Web Dev, Poster, Vocal"
-  );
+  SpreadsheetApp.getUi().alert("Setup Semua Sheet Selesai!");
 }
 
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("IT Days Admin")
-    .addItem("1. Setup & Rapikan Semua Sheet", "setupSemuaSheets")
-    .addItem("2. Install Trigger Email Otomatis", "installOnEditTrigger")
+    .addItem("Setup Semua Sheet", "setupSemuaSheets")
     .addToUi();
 }

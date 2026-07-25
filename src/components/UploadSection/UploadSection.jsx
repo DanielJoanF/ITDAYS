@@ -1,10 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { getBranchByName } from '../../data/categories';
 import Toast from '../Toast/Toast';
 import './UploadSection.css';
 
 const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+function executeRecaptcha(action) {
+  return new Promise((resolve) => {
+    if (!window.grecaptcha || !RECAPTCHA_SITE_KEY) {
+      console.warn('[reCAPTCHA] grecaptcha belum siap atau SITE_KEY belum dikonfigurasi.');
+      resolve(null);
+      return;
+    }
+    window.grecaptcha.ready(() => {
+      window.grecaptcha
+        .execute(RECAPTCHA_SITE_KEY, { action })
+        .then(resolve)
+        .catch((err) => {
+          console.error('[reCAPTCHA] Gagal execute:', err);
+          resolve(null);
+        });
+    });
+  });
+}
 
 export default function UploadSection() {
   const [searchParams] = useSearchParams();
@@ -76,7 +97,9 @@ export default function UploadSection() {
   // Initial check if URL has query parameters
   useEffect(() => {
     if (initialEmail) {
-      checkEmailEligibility(initialEmail, initialCabang);
+      Promise.resolve().then(() => {
+        checkEmailEligibility(initialEmail, initialCabang);
+      });
     }
   }, [initialEmail, initialCabang, checkEmailEligibility]);
 
@@ -90,8 +113,8 @@ export default function UploadSection() {
   }, []);
 
   // Determine dynamic fields based on branch config
-  const branchConfig = participantData ? getBranchByName(participantData.cabang) : null;
-  const uploadFields = branchConfig?.uploadFields || [];
+  const branchConfig = useMemo(() => participantData ? getBranchByName(participantData.cabang) : null, [participantData]);
+  const uploadFields = useMemo(() => branchConfig?.uploadFields || [], [branchConfig]);
 
   const handleSubmitKarya = useCallback(async (e) => {
     e.preventDefault();
@@ -118,8 +141,11 @@ export default function UploadSection() {
     setIsSubmitting(true);
 
     try {
+      const recaptchaToken = await executeRecaptcha('upload_karya');
+
       const payload = {
         action: 'upload',
+        recaptchaToken: recaptchaToken || '',
         email: participantData.email,
         cabang: participantData.cabang,
       };

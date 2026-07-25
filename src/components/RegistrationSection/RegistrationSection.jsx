@@ -185,6 +185,17 @@ export default function RegistrationSection() {
       ]);
 
       const payload = {
+        action: 'registration',
+        recaptchaToken,
+        nama: formData.nama.trim(),
+        email: formData.email.trim(),
+        whatsapp: formData.whatsapp.trim(),
+        no_hp: formData.whatsapp.trim(),
+        instansi: formData.instansi.trim(),
+        kategori: activeCategory,
+        cabang: activeBranch.name,
+        ktm_b64: ktmEncoded,
+        payment_b64: paymentEncoded,
         [COL.TIMESTAMP]: new Date().toLocaleString('id-ID'),
         [COL.NAMA]: formData.nama.trim(),
         [COL.EMAIL]: formData.email.trim(),
@@ -311,7 +322,7 @@ export default function RegistrationSection() {
               name="website"
               tabIndex={-1}
               autoComplete="off"
-              value={honeypotRef.current}
+              defaultValue=""
               onChange={(e) => { honeypotRef.current = e.target.value; }}
             />
           </div>
