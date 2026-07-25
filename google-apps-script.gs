@@ -263,10 +263,14 @@ function doPost(e) {
       return sendJson(429, { error: "Terlalu banyak permintaan. Silakan tunggu beberapa menit." });
     }
 
-    // 2. reCAPTCHA Verification
-    const recaptchaResult = verifyRecaptcha(data.recaptchaToken || '');
-    if (!recaptchaResult.success) {
-      return sendJson(403, { error: "Verifikasi keamanan gagal. Refresh halaman dan coba lagi." });
+    // 2. reCAPTCHA Verification (opsional — hanya jika RECAPTCHA_SECRET dikonfigurasi di Script Properties)
+    // Verifikasi utama sudah dilakukan di Vercel serverless function sebelum data sampai ke sini.
+    const recaptchaSecret = CONFIG.recaptchaSecret();
+    if (recaptchaSecret) {
+      const recaptchaResult = verifyRecaptcha(data.recaptchaToken || '');
+      if (!recaptchaResult.success) {
+        return sendJson(403, { error: "Verifikasi keamanan gagal. Refresh halaman dan coba lagi." });
+      }
     }
 
     // 3. Dispatch action
