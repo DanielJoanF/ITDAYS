@@ -13,8 +13,8 @@
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 4rem;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
   margin-bottom: 4rem;
 }
 
@@ -35,7 +35,7 @@
 
 .footer-links {
   display: flex;
-  gap: 5rem;
+  gap: 2.5rem;
 }
 
 .footer-col h4 {
@@ -53,9 +53,11 @@
   gap: 1rem;
 }
 
-.footer-col a {
+.footer-col a,
+.footer-info-text {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.95rem;
+  line-height: 1.5;
   transition: var(--transition-smooth);
 }
 

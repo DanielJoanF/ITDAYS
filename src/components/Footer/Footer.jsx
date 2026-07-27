@@ -33,7 +33,22 @@ const Footer = () => {
             <h4>Kontak Kami</h4>
             <ul>
               <li><a href="mailto:usditdays@gmail.com">usditdays@gmail.com</a></li>
-              <li><a href="#">Instagram @itdays_usd</a></li>
+              <li><a href="https://instagram.com/itdays_usd" target="_blank" rel="noopener noreferrer">Instagram @itdays_usd</a></li>
+              <li>
+                <a href="https://wa.me/6289662414908" target="_blank" rel="noopener noreferrer">
+                  CP: +62 896-6241-4908 - Jodi
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>Pembayaran</h4>
+            <ul>
+              <li>
+                <span className="footer-info-text">
+                  Rekening: 1383 0100 3277 502 (BRI) a/n Elisabeth Laura A
+                </span>
+              </li>
             </ul>
           </div>
         </div>
