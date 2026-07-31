@@ -80,7 +80,6 @@ export default function RegistrationSection() {
         {activeBranch.requirements && activeBranch.requirements.length > 0 && (
           <div className="requirements-panel">
             <h3 className="requirements-title">
-              <span className="requirements-icon">📋</span>
               YANG PERLU DISIAPKAN
             </h3>
             <p className="requirements-desc">
