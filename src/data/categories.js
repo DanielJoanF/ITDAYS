@@ -97,7 +97,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'UI/UX',
-        formUrl: 'https://forms.gle/dLukCgembFFbwCXx6',
+        formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdaJKURVfRLqhkeMajLEFG-eVpRdU7R4v_voFktiKySv41QsQ/viewform?usp=header',
         teamSize: { min: 2, max: 3 },
         requirements: [
           'Nama lengkap ketua tim',
@@ -124,7 +124,7 @@ export const CATEGORIES = {
       },
       {
         name: 'Web Dev',
-        formUrl: 'https://forms.gle/ni9t5sR61W4iXSZt7',
+        formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScykhUG_QvdOaKpw_gtxTUT3z28waGj329JyB5Wg55FTwMOeg/viewform?usp=header',
         teamSize: { min: 2, max: 3 },
         requirements: [
           'Nama lengkap ketua tim',
@@ -165,7 +165,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Poster',
-        formUrl: 'https://forms.gle/EpymCmpQsNZ24L427',
+        formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfENesi2Hugh1MiKOs41jxuZuSmdGE0DqIrQ3loqaHXbBSmaA/viewform?usp=header',
         teamSize: { min: 1, max: 1 },
         requirements: [
           'Nama lengkap peserta',
