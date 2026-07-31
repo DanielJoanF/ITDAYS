@@ -5,8 +5,7 @@ import './index.css'
 import App from './App.jsx'
 
 // ─── Inject reCAPTCHA v3 script secara dinamis ────────────────────────────────
-// Cara ini memastikan VITE_RECAPTCHA_SITE_KEY ter-substitusi dengan benar
-// oleh Vite saat build, tidak bisa dilakukan dari index.html <script src="...">
+// Digunakan oleh UploadSection (/upload) untuk proteksi submit karya.
 const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 if (siteKey) {
   const script = document.createElement('script');

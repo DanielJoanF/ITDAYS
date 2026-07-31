@@ -4,9 +4,10 @@
  * Setiap kategori memiliki:
  *   - branches:    cabang lomba (array of branch configs)
  *   - Each branch has:
- *     - name:       display name
- *     - teamSize:   { min, max } — total participants including leader
- *     - extraFields:  field tambahan spesifik per cabang (diisi saat registrasi)
+ *     - name:        display name
+ *     - formUrl:     URL Google Form pendaftaran (buka di tab baru)
+ *     - teamSize:    { min, max } — total participants including leader
+ *     - requirements: array of string — info ketentuan yang perlu disiapkan
  *     - uploadFields: field link karya (diisi saat upload, setelah verifikasi admin)
  *
  * Field object shape:
@@ -14,6 +15,7 @@
  *
  * Workshop has been removed.
  * CTF replaced by UI/UX. Lomba Web replaced by Web Dev.
+ * Registration is now handled via external Google Form (formUrl).
  */
 
 export const CATEGORIES = {
@@ -21,19 +23,34 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Badminton',
+        formUrl: 'https://forms.gle/6USgu6ZWhbVDokjz5',
         teamSize: { min: 2, max: 2 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama anggota tim (1 orang)',
+          'Nama tim',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
       {
         name: 'Futsal',
+        formUrl: 'https://forms.gle/1TTrTLwHEByFrfnk8',
         teamSize: { min: 10, max: 12 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
-          { name: 'official_1', label: 'Official 1 (Wajib)', type: 'text', placeholder: 'Nama official 1', required: true },
-          { name: 'official_2', label: 'Official 2 (Opsional)', type: 'text', placeholder: 'Nama official 2 (opsional)', required: false },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama seluruh anggota tim (9–11 orang)',
+          'Nama tim',
+          'Nama official 1 (wajib) & official 2 (opsional)',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
@@ -42,22 +59,35 @@ export const CATEGORIES = {
   Games: {
     branches: [
       {
-        name: 'Mobile Legends',
-        teamSize: { min: 5, max: 7 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
-          { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
-          { name: 'nickname', label: 'Nickname In-Game', type: 'text', placeholder: 'Nickname kapten', required: true },
+        name: 'PUBG',
+        formUrl: 'https://forms.gle/136LHxpnMRLMAPn19',
+        teamSize: { min: 4, max: 5 },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama anggota tim (3–4 orang)',
+          'Nama tim',
+          'ID Game & Nickname in-game ketua',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
       {
-        name: 'PUBG',
-        teamSize: { min: 4, max: 5 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
-          { name: 'id_game', label: 'ID Game (Kapten)', type: 'text', placeholder: 'ID#Server', required: true },
-          { name: 'nickname', label: 'Nickname In-Game', type: 'text', placeholder: 'Nickname kapten', required: true },
+        name: 'ML',
+        formUrl: 'https://forms.gle/XpNT7ZsPvsMkTT6N6',
+        teamSize: { min: 2, max: 3 },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama anggota tim (1–2 orang)',
+          'Nama tim',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
@@ -67,9 +97,18 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'UI/UX',
+        formUrl: 'https://forms.gle/dLukCgembFFbwCXx6',
         teamSize: { min: 2, max: 3 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama anggota tim (1–2 orang)',
+          'Nama tim',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Link Figma project (diunggah setelah verifikasi admin)',
         ],
         uploadFields: [
           {
@@ -85,9 +124,19 @@ export const CATEGORIES = {
       },
       {
         name: 'Web Dev',
+        formUrl: 'https://forms.gle/ni9t5sR61W4iXSZt7',
         teamSize: { min: 2, max: 3 },
-        extraFields: [
-          { name: 'nama_tim', label: 'Nama Tim', type: 'text', placeholder: 'Nama tim kamu', required: true },
+        requirements: [
+          'Nama lengkap ketua tim',
+          'Nama anggota tim (1–2 orang)',
+          'Nama tim',
+          'Email aktif ketua',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Link repository GitHub (diunggah setelah verifikasi admin)',
+          'Link Google Drive PPT/PDF presentasi (diunggah setelah verifikasi admin)',
         ],
         uploadFields: [
           {
@@ -116,8 +165,17 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Poster',
+        formUrl: 'https://forms.gle/EpymCmpQsNZ24L427',
         teamSize: { min: 1, max: 1 },
-        extraFields: [],
+        requirements: [
+          'Nama lengkap peserta',
+          'Email aktif',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Link Google Drive hasil poster (diunggah setelah verifikasi admin)',
+        ],
         uploadFields: [
           {
             name: 'poster_drive_link',
@@ -132,8 +190,16 @@ export const CATEGORIES = {
       },
       {
         name: 'Vocal',
+        formUrl: 'https://forms.gle/zmJaNzRha7vyAPcZA',
         teamSize: { min: 1, max: 1 },
-        extraFields: [],
+        requirements: [
+          'Nama lengkap peserta',
+          'Email aktif',
+          'Nomor WhatsApp aktif',
+          'Asal instansi / sekolah',
+          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+        ],
         uploadFields: [],
       },
     ],
