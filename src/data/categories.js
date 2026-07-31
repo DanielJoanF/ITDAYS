@@ -77,7 +77,7 @@ export const CATEGORIES = {
       },
       {
         name: 'ML',
-        formUrl: 'https://forms.gle/XpNT7ZsPvsMkTT6N6',
+        formUrl: 'https://forms.gle/R7jkqHSR9bbx8Z3bA',
         teamSize: { min: 2, max: 3 },
         requirements: [
           'Nama lengkap ketua tim',
