@@ -22,7 +22,7 @@ export default function RegistrationSection() {
   }, [activeBranch]);
 
   // Info label for the register button area
-  const infoLabel = `${activeCategory.toUpperCase()} → ${activeBranch.name.toUpperCase()}`;
+  const infoLabel = `${activeCategory.toUpperCase()} → ${activeBranch.name.toUpperCase()} (${activeBranch.price})`;
 
   // ─── render ──────────────────────────────────────────────────
   return (
@@ -71,9 +71,16 @@ export default function RegistrationSection() {
           </div>
         )}
 
-        {/* Competition Info Badge */}
-        <div className="competition-info-badge">
-          <span className="badge-text">{teamSizeLabel}</span>
+        {/* Competition Info Badges */}
+        <div className="competition-info-container">
+          <div className="competition-info-badge">
+            <span className="badge-text">{teamSizeLabel}</span>
+          </div>
+          {activeBranch.price && (
+            <div className="competition-info-badge price-badge">
+              <span className="badge-text">Biaya Pendaftaran: {activeBranch.price}</span>
+            </div>
+          )}
         </div>
 
         {/* Requirements Panel */}

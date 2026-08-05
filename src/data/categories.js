@@ -23,6 +23,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Badminton',
+        price: 'Rp 50.000',
         formUrl: 'https://forms.gle/6USgu6ZWhbVDokjz5',
         teamSize: { min: 2, max: 2 },
         requirements: [
@@ -33,12 +34,13 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 50.000 (50k) (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
       {
         name: 'Futsal',
+        price: 'Rp 350.000',
         formUrl: 'https://forms.gle/1TTrTLwHEByFrfnk8',
         teamSize: { min: 10, max: 12 },
         requirements: [
@@ -50,7 +52,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 350.000 (350k) (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
@@ -60,6 +62,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'PUBG',
+        price: 'Rp 60.000',
         formUrl: 'https://forms.gle/136LHxpnMRLMAPn19',
         teamSize: { min: 4, max: 5 },
         requirements: [
@@ -71,12 +74,13 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 60.000 (60k) (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
       {
         name: 'ML',
+        price: 'Rp 60.000',
         formUrl: 'https://forms.gle/R7jkqHSR9bbx8Z3bA',
         teamSize: { min: 1, max: 5 },
         requirements: [
@@ -88,7 +92,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / kampus',
           'Foto KTM / Kartu Tanda Siswa (maks 10 MB)',
-          'Bukti pembayaran (maks 10 MB)',
+          'Bukti pembayaran pendaftaran Rp 60.000 (60k) (maks 10 MB)',
         ],
         uploadFields: [],
       },
@@ -98,6 +102,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'UI/UX',
+        price: 'Rp 55.000',
         formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdaJKURVfRLqhkeMajLEFG-eVpRdU7R4v_voFktiKySv41QsQ/viewform?usp=header',
         teamSize: { min: 2, max: 3 },
         requirements: [
@@ -108,7 +113,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 55.000 (55k) (JPG/PNG/PDF, maks 5 MB)',
           'Link Figma project (diunggah setelah verifikasi admin)',
         ],
         uploadFields: [
@@ -125,6 +130,7 @@ export const CATEGORIES = {
       },
       {
         name: 'Web Dev',
+        price: 'Rp 55.000',
         formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScykhUG_QvdOaKpw_gtxTUT3z28waGj329JyB5Wg55FTwMOeg/viewform?usp=header',
         teamSize: { min: 2, max: 3 },
         requirements: [
@@ -135,7 +141,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 55.000 (55k) (JPG/PNG/PDF, maks 5 MB)',
           'Link repository GitHub (diunggah setelah verifikasi admin)',
           'Link Google Drive PPT/PDF presentasi (diunggah setelah verifikasi admin)',
         ],
@@ -166,6 +172,7 @@ export const CATEGORIES = {
     branches: [
       {
         name: 'Poster',
+        price: 'Rp 45.000',
         formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfENesi2Hugh1MiKOs41jxuZuSmdGE0DqIrQ3loqaHXbBSmaA/viewform?usp=header',
         teamSize: { min: 1, max: 1 },
         requirements: [
@@ -174,7 +181,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 45.000 (45k) (JPG/PNG/PDF, maks 5 MB)',
           'Link Google Drive hasil poster (diunggah setelah verifikasi admin)',
         ],
         uploadFields: [
@@ -191,6 +198,7 @@ export const CATEGORIES = {
       },
       {
         name: 'Vocal',
+        price: 'Rp 50.000',
         formUrl: 'https://forms.gle/zmJaNzRha7vyAPcZA',
         teamSize: { min: 1, max: 1 },
         requirements: [
@@ -199,7 +207,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 50.000 (50k) (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
