@@ -34,3 +34,6 @@ analysis_registration_flow.md
 !.config/settings/.env.example
 .vercel
 .env*
+
+# Documentation
+docs/

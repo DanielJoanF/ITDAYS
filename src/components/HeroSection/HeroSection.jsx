@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './HeroSection.css';
 
 const HeroSection = () => {
-  const targetDate = new Date('2026-09-05T00:00:00').getTime();
+  const targetDate = new Date('2026-10-18T00:00:00').getTime();
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   function calculateTimeLeft() {

@@ -4,6 +4,15 @@ import logoImg from '../../assets/logo-itdays.png';
 
 const Navbar = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,18 +44,25 @@ const Navbar = () => {
         <a href="#home" className="nav-logo">
           <img src={logoImg} alt="IT DAYS 2026 Logo" className="logo-img" />
         </a>
-        <ul className="nav-menu">
+        <div className="mobile-menu-icon" onClick={toggleMobileMenu}>
+          <div className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           <li className="nav-item">
-            <a href="#home" className={`nav-link ${activeSection === 'home' ? 'active' : ''}`}>Beranda</a>
+            <a href="#home" className={`nav-link ${activeSection === 'home' ? 'active' : ''}`} onClick={closeMobileMenu}>Beranda</a>
           </li>
           <li className="nav-item">
-            <a href="#about" className={`nav-link ${activeSection === 'about' ? 'active' : ''}`}>Tentang</a>
+            <a href="#about" className={`nav-link ${activeSection === 'about' ? 'active' : ''}`} onClick={closeMobileMenu}>Tentang</a>
           </li>
           <li className="nav-item">
-            <a href="#timeline" className={`nav-link ${activeSection === 'timeline' ? 'active' : ''}`}>Timeline</a>
+            <a href="#timeline" className={`nav-link ${activeSection === 'timeline' ? 'active' : ''}`} onClick={closeMobileMenu}>Timeline</a>
           </li>
           <li className="nav-item">
-            <a href="#registration" className={`nav-link ${activeSection === 'registration' ? 'active' : ''}`}>Pendaftaran</a>
+            <a href="#registration" className={`nav-link ${activeSection === 'registration' ? 'active' : ''}`} onClick={closeMobileMenu}>Pendaftaran</a>
           </li>
           <li className="nav-item">
             <a 
@@ -54,6 +70,7 @@ const Navbar = () => {
               target="_blank" 
               rel="noopener noreferrer" 
               className="nav-link"
+              onClick={closeMobileMenu}
             >
               Peraturan
             </a>

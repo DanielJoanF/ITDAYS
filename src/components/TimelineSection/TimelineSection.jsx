@@ -3,13 +3,13 @@ import './TimelineSection.css';
 const TimelineSection = () => {
   const events = [
     {
-      date: "01 – 25 Agustus 2026",
+      date: "01 Agustus – 08 September 2026",
       title: "Pendaftaran Lomba",
       desc: "Masa pendaftaran dan pengunggahan berkas administratif untuk seluruh cabang kompetisi IT DAYS 2026.",
       status: "upcoming"
     },
     {
-      date: "05 September 2026",
+      date: "09 September 2026",
       title: "Technical Meeting",
       desc: "Penjelasan regulasi, tata tertib, dan teknis pelaksanaan masing-masing cabang lomba.",
       status: "upcoming"
