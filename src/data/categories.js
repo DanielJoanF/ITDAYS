@@ -61,24 +61,6 @@ export const CATEGORIES = {
   Games: {
     branches: [
       {
-        name: 'PUBG',
-        price: 'Rp 60.000',
-        formUrl: 'https://forms.gle/136LHxpnMRLMAPn19',
-        teamSize: { min: 4, max: 5 },
-        requirements: [
-          'Nama lengkap ketua tim',
-          'Nama anggota tim (3–4 orang)',
-          'Nama tim',
-          'ID Game & Nickname in-game ketua',
-          'Email aktif ketua',
-          'Nomor WhatsApp aktif',
-          'Asal instansi / sekolah',
-          'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran pendaftaran Rp 60.000 (60k) (JPG/PNG/PDF, maks 5 MB)',
-        ],
-        uploadFields: [],
-      },
-      {
         name: 'ML',
         price: 'Rp 60.000',
         formUrl: 'https://forms.gle/R7jkqHSR9bbx8Z3bA',

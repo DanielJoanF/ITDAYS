@@ -27,18 +27,6 @@ const TimelineSection = () => {
       status: "upcoming"
     },
     {
-      date: "19 September 2026",
-      title: "Penyisihan PUBG",
-      desc: "Kualifikasi awal pertandingan cabang kompetisi PUBG.",
-      status: "upcoming"
-    },
-    {
-      date: "20 September 2026",
-      title: "Final PUBG",
-      desc: "Pertandingan final penentu pemenang untuk cabang kompetisi PUBG.",
-      status: "upcoming"
-    },
-    {
       date: "23 September 2026",
       title: "Deadline Pengumpulan UI/UX & Poster",
       desc: "Batas akhir pengumpulan karya kreatif dan desain untuk cabang lomba UI/UX serta Poster.",
