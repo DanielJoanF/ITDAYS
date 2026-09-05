@@ -15,13 +15,13 @@ const TimelineSection = () => {
       status: "upcoming"
     },
     {
-      date: "12 September 2026",
+      date: "19 September 2026",
       title: "Penyisihan ML & Badminton",
       desc: "Babak kualifikasi awal untuk cabang kompetisi Mobile Legends dan Badminton.",
       status: "upcoming"
     },
     {
-      date: "13 September 2026",
+      date: "20 September 2026",
       title: "Final ML & Badminton",
       desc: "Babak final penentu juara untuk cabang kompetisi Mobile Legends dan Badminton.",
       status: "upcoming"

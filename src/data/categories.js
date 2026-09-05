@@ -40,7 +40,7 @@ export const CATEGORIES = {
       },
       {
         name: 'Futsal',
-        price: 'Rp 350.000',
+        price: 'Rp 200.000',
         formUrl: 'https://forms.gle/1TTrTLwHEByFrfnk8',
         teamSize: { min: 10, max: 12 },
         requirements: [
@@ -52,7 +52,7 @@ export const CATEGORIES = {
           'Nomor WhatsApp aktif',
           'Asal instansi / sekolah',
           'Foto KTM / Kartu Tanda Siswa (JPG/PNG/PDF, maks 5 MB)',
-          'Bukti pembayaran pendaftaran Rp 350.000 (350k) (JPG/PNG/PDF, maks 5 MB)',
+          'Bukti pembayaran pendaftaran Rp 200.000 (200k) (JPG/PNG/PDF, maks 5 MB)',
         ],
         uploadFields: [],
       },
